@@ -1036,7 +1036,6 @@ function buildPlanHTML(){
   for(var s=0;s<d.slots;s++){
     if(!d.halb&&s===2){
       if(d.mittag)fullRow('12:00 – 12:30',esc(d.mittag.name),'Impuls vor der Pause',d.mittag.id);
-      else fullSlot('12:00 – 12:30','Impuls vor der Pause wählen (optional)','Keynotes & Impulse');
       fullRow(d.mittag?'12:30 – 13:00':'12:00 – 13:00','Mittagspause');
     }
     h+='<div class="plan-row"><div class="plan-time">'+slotTimes[s]+(s===0?'<span class="cell-note" style="display:block;font-weight:400">+ 15 Min für eure Fragen</span>':'')+'</div>';
@@ -1079,7 +1078,7 @@ function showForm(){
   h+='<div class="f-field"><label class="f-label" for="fName">Name <em>*</em></label><input class="f-input" id="fName" type="text" autocomplete="name"></div>';
   h+='<div class="f-field"><label class="f-label" for="fFirma">Firma <em>*</em></label><input class="f-input" id="fFirma" type="text" autocomplete="organization"></div>';
   h+='<div class="f-field"><label class="f-label" for="fMail">E-Mail <em>*</em></label><input class="f-input" id="fMail" type="email" autocomplete="email"></div>';
-  h+='<div class="f-field"><label class="f-label" for="fTel">Telefon (optional)</label><input class="f-input" id="fTel" type="tel" autocomplete="tel"></div>';
+  h+='<div class="f-field"><label class="f-label" for="fTel">Telefon</label><input class="f-input" id="fTel" type="tel" autocomplete="tel"></div>';
   h+='<div class="f-field wide"><label class="f-label" for="fTermin">Wunschtermin / Zeitraum</label><input class="f-input" id="fTermin" type="text" placeholder="z. B. September 2026 oder noch offen"></div>';
   h+='<div class="f-field wide"><label class="f-label" for="fMsg">Nachricht (optional)</label><textarea class="f-area" id="fMsg" placeholder="Gibt es etwas, das wir vorab wissen sollten?"></textarea></div>';
   h+='</div>';
@@ -1095,6 +1094,34 @@ function showForm(){
   inner.innerHTML=h;
   goToSlide(FORM_SLIDE);
 }
+/* Der Tagesplan als lesbarer Text: Uhrzeit, Spalte und Modul – damit im
+   Posteingang nachvollziehbar ist, WANN welches Modul laufen soll. */
+function buildPlanLines(){
+  var d=buildPlanData(),out=[];
+  function zeile(zeit,text){out.push(zeit+'  |  '+text)}
+  if(d.opener)zeile('09:00 - 09:45','Gemeinsamer Auftakt: '+d.opener.name);
+  var slotTimes=d.halb
+    ?['10:00 - 10:45','11:00 - 11:45']
+    :['10:00 - 10:45','11:00 - 11:45','13:00 - 13:45','14:00 - 14:45'];
+  for(var s=0;s<d.slots;s++){
+    if(!d.halb&&s===2){
+      if(d.mittag)zeile('12:00 - 12:30','Impuls vor der Pause: '+d.mittag.name);
+      zeile(d.mittag?'12:30 - 13:00':'12:00 - 13:00','Mittagspause');
+    }
+    var belegt=[];
+    d.tracks.forEach(function(t){
+      var e=t.grid?t.grid[s]:null;
+      if(e&&!e.cont)belegt.push(t.label+': '+e.m.name+' ('+e.m.dauer+' Min)');
+      else if(e&&e.cont)belegt.push(t.label+': '+e.m.name+' (Fortsetzung)');
+    });
+    if(belegt.length)zeile(slotTimes[s],belegt.join('  ||  '));
+    else zeile(slotTimes[s],'frei');
+  }
+  if(d.sks.length)zeile(d.halb?'12:00 - 13:00':'15:00 - 16:00',
+    'Schnupperkurse parallel: '+d.sks.map(function(m){return m.name}).join(', '));
+  if(d.ausklang)zeile('im Anschluss','Tagesausklang: '+d.ausklang.name+' ('+d.ausklang.dauer+' Min)');
+  return out;
+}
 function buildSummaryText(){
   var lines=['Anfrage Gesundheitstag über den Konfigurator','','Antworten:'];
   QUESTIONS.forEach(function(q){
@@ -1106,8 +1133,8 @@ function buildSummaryText(){
     }
     lines.push('- '+q.label+': '+txt);
   });
-  lines.push('','Module:');
-  planIds().forEach(function(id){var m=byId(id);if(m)lines.push('- '+m.name)});
+  lines.push('','TAGESPLAN (vom Kunden so zusammengestellt):');
+  buildPlanLines().forEach(function(l){lines.push(l)});
   if(recoInterest&&recoById(recoInterest))lines.push('','Zusätzliches Interesse: '+recoById(recoInterest).title);
   return lines.join('\n');
 }

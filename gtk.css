@@ -19,12 +19,13 @@
 }#gtk-root *,#gtk-root *::before,#gtk-root *::after{box-sizing:border-box;margin:0;padding:0}#gtk-root{overflow:hidden;height:100%}#gtk-root{font-family:var(--font-body);font-weight:400;background:var(--surface);color:var(--on-surface);
   -webkit-font-smoothing:antialiased;overflow:hidden;height:100%}/* ── VIEWPORT & SLIDES ── */#gtk-root .viewport{width:100%;height:100vh;position:relative;overflow:hidden}#gtk-root .slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-start;
   opacity:0;pointer-events:none;transition:opacity .55s cubic-bezier(.4,0,.2,1),transform .55s cubic-bezier(.4,0,.2,1);
-  transform:translateY(40px);padding:2rem;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}/* Zentrieren ohne Abschneiden. Wichtig: .slide ist bei Hero und Fragen ein
-   SPALTEN-Flexbox, dort steuert justify-content die Senkrechte. Ein zentrierendes
-   justify-content würde zu hohen Inhalt nach oben aus dem Scrollbereich schieben
-   (unerreichbar). Deshalb: Slide beginnt oben, der Inhaltsblock ist mindestens
-   bildschirmhoch und zentriert sich in sich selbst. flex-shrink:0 verhindert,
-   dass die Spalten-Flexbox ihn auf Fensterhöhe zusammenstaucht. */#gtk-root .hero-content,#gtk-root .q-inner{min-height:100%;display:flex;flex-direction:column;justify-content:center;flex-shrink:0}#gtk-root .slide.active{opacity:1;pointer-events:auto;transform:translateY(0)}#gtk-root .slide.exit-up{opacity:0;transform:translateY(-60px);pointer-events:none}/* ── HERO ── */#gtk-root .slide-hero{flex-direction:column;text-align:center}#gtk-root .slide-hero::before{content:'';position:absolute;top:-15%;right:-8%;width:55%;height:130%;
+  transform:translateY(40px);padding:2rem;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}/* Zentrieren ohne Abschneiden. .slide ist bei Hero und Fragen ein SPALTEN-Flexbox,
+   dort steuert justify-content die Senkrechte – zentrierend würde es zu hohen Inhalt
+   nach oben aus dem Scrollbereich schieben (unerreichbar). Deshalb beginnt der Slide
+   oben, und der Inhaltsblock zentriert sich über auto-Margins: die absorbieren nur
+   ÜBERSCHÜSSIGEN Platz und werden bei zu hohem Inhalt zu 0. Der Block bleibt bewusst
+   ein normaler Block (kein Flex), damit Buttons ihre Eigenbreite behalten;
+   flex-shrink:0 verhindert das Zusammenstauchen auf Fensterhöhe. */#gtk-root .hero-content,#gtk-root .q-inner{margin:auto;flex-shrink:0}#gtk-root .slide.active{opacity:1;pointer-events:auto;transform:translateY(0)}#gtk-root .slide.exit-up{opacity:0;transform:translateY(-60px);pointer-events:none}/* ── HERO ── */#gtk-root .slide-hero{flex-direction:column;text-align:center}#gtk-root .slide-hero::before{content:'';position:absolute;top:-15%;right:-8%;width:55%;height:130%;
   background:linear-gradient(160deg,rgba(56,186,71,.06),rgba(0,110,29,.02));border-radius:40%;z-index:0}#gtk-root .hero-content{position:relative;z-index:1;max-width:780px}#gtk-root .hero-overline{font-size:.78rem;font-weight:500;letter-spacing:.13em;text-transform:uppercase;
   color:var(--primary);margin-bottom:1.5rem;opacity:0;animation:fadeIn .6s .2s forwards}#gtk-root .hero-h1{font-family:var(--font-display);font-weight:700;font-size:clamp(2.4rem,5.5vw,4.2rem);
   line-height:1.06;letter-spacing:-.03em;margin-bottom:1.75rem;opacity:0;animation:fadeIn .7s .35s forwards}#gtk-root .hero-h1 em{font-style:normal;background:linear-gradient(135deg,var(--primary),var(--primary-container));
