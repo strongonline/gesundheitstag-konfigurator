@@ -4,7 +4,6 @@
    mit den Site-Styles. Ehemals fixe Elemente sind absolut im Root
    positioniert (Root = 100dvh-Bühne).
    ═══════════════════════════════════════════════════════════════ */
-#gtk-root{position:relative;width:100%;height:100vh;height:100dvh;overflow:hidden;background:#fbf9f7}
 /* Keine eigenen @font-face-Regeln und keine externen Font-Calls (DSGVO).
    Cera Pro liefert die Webflow-Seite (dort als Custom Font hochgeladen),
    ohne Cera Pro greift die System-Schrift. */#gtk-root{
@@ -104,6 +103,11 @@
   max-height:50vh;overflow-y:auto;background:var(--white);border-radius:var(--radius-lg);
   box-shadow:0 12px 44px rgba(0,0,0,.16);padding:1rem 1.1rem;display:none}#gtk-root .cart-panel.open{display:block}#gtk-root .cart-panel h4{font-family:var(--font-display);font-size:.82rem;margin-bottom:.5rem}#gtk-root .cart-panel-item{font-size:.78rem;color:var(--on-surface-variant);padding:.32rem 0;border-top:1px solid var(--surface-low);line-height:1.4}#gtk-root .cart-panel-item:first-of-type{border-top:none}/* ── ANIMATIONS ── */@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes slideCard{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}@media(prefers-reduced-motion:reduce){#gtk-root *,#gtk-root *::before,#gtk-root *::after{animation-duration:.01ms !important;animation-delay:0ms !important;transition-duration:.01ms !important}#gtk-root .r-card,#gtk-root .hero-overline,#gtk-root .hero-h1,#gtk-root .hero-sub,#gtk-root .hero-cta,#gtk-root .hero-stats{opacity:1 !important}
 }
+
+/* ── BASIS-SIZING (bewusst am Dateiende: die aus html/body transformierten
+   #gtk-root-Regeln enthalten height:100%, das in einem Embed-Kontext zu 0
+   kollabiert – diese Regel muss sie in der Kaskade überschreiben) ── */
+#gtk-root{position:relative;width:100%;height:100vh;height:100dvh;overflow:hidden;background:#fbf9f7}
 
 /* Viewport füllt den Root (statt eigener vh-Rechnung) */
 #gtk-root .viewport{width:100%;height:100%}
