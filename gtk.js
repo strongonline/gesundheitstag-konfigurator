@@ -1026,7 +1026,7 @@ function buildPrintHTML(){
   h+='<title>Gesundheitstag – Tagesplan | Strong Partners</title><style>';
   h+='@page{size:A4 '+(quer?'landscape':'portrait')+';margin:14mm}';
   h+='*{margin:0;padding:0;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}';
-  h+='body{font-family:"Plus Jakarta Sans",Arial,sans-serif;color:#1a1c1a;font-size:10.5pt;line-height:1.45;padding:4mm}';
+  h+='body{font-family:"Cera Pro",system-ui,-apple-system,Arial,sans-serif;color:#1a1c1a;font-size:10.5pt;line-height:1.45;padding:4mm}';
   h+='.kopf{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #006e1d;padding-bottom:4mm;margin-bottom:5mm}';
   h+='.kopf h1{font-size:16pt;color:#006e1d}.kopf .sub{font-size:9pt;color:#5c6660;margin-top:1mm}';
   h+='.marke{font-weight:800;font-size:11pt}';
