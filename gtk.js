@@ -164,7 +164,7 @@ var MODULES=[
   desc:'Ein ergonomisches Büro ist nur ergonomisch, wenn man es richtig nutzt. Tricks für Rücken, Nacken und Hüfte, im Office und im Home-Office.'},
  {id:'st_aktivpause',name:'Aktive Pause, Faszientraining & Rücken-Fit',typ:'aktiv',kat:'Bewegung & Ergonomie',themen:['bewegung'],fit:['alle','gewerblich'],dauer:45,
   desc:'Kleine Bewegungs- und Lockerungseinheiten für den Arbeitsalltag plus Erste-Hilfe-Übungen bei Verspannungen. Ohne Schwitzen, ohne Sportkleidung.'},
- {id:'st_officeparcours',name:'Officeparcours: Gruppendynamik & soziale Gesundheit',typ:'aktiv',kat:'Bewegung & Ergonomie',themen:['team','bewegung'],fit:['alle','azubis'],dauer:45,
+ {id:'st_officeparcours',name:'Officeparcours: Gruppendynamik & soziale Gesundheit',typ:'aktiv',kat:'Mentale Gesundheit & Regeneration',themen:['team','bewegung'],fit:['alle','azubis'],dauer:45,
   desc:'Minispiele, die den Ernst des Alltags vergessen lassen: lockern die Atmosphäre und stärken Kooperation und Kommunikation im Team.'},
  {id:'st_dehnen_rad',name:'Dehnübungen für Radfahrer:innen',typ:'aktiv',kat:'Bewegung & Ergonomie',themen:['bewegung'],fit:['alle','gewerblich'],dauer:20,
   desc:'Ausgleich für verkürzte Muskelgruppen bei Vielfahrer:innen, im Stehen und Sitzen, ohne Sportkleidung. Kompakte 20 Minuten.'},
@@ -632,7 +632,6 @@ function showResults(){
     items.forEach(function(m){
       h+='<div class="pool-item"><div class="pool-item-body">';
       h+='<div class="pool-item-name">'+esc(m.name)+'</div>';
-      h+='<div class="pool-dest">→ '+esc(destLabel(m))+'</div>';
       h+='<div class="pool-item-desc">'+esc(m.desc)+'</div></div>';
       h+='<button class="pool-add" title="Zum Tagesplan hinzufügen" onclick="addModule(\''+m.id+'\')">+</button></div>';
     });
@@ -663,22 +662,17 @@ function togglePoolEl(btn){
 }
 var FELD_POOLKAT={bewegung:'Bewegung & Ergonomie',mental:'Mentale Gesundheit & Regeneration',
   ernaehrung:'Ernährung',checks:'Gesundheitschecks'};
-/* Wohin wandert dieses Modul im Plan? (für die Pool-Anzeige) */
-function destLabel(m){
-  if(m.typ==='schnupperkurs')return 'Abschluss-Runde (Schnupperkurse)';
-  if(m.typ==='baustein')return 'Gemeinsamer Tagesausklang';
-  if(m.id==='kn_stark'||m.id==='kn_online')return 'Gemeinsamer Auftakt';
-  if(m.id==='kn_ernaehrung')return 'Impuls vor der Mittagspause';
-  var kf=KOMPETENZFELDER[feldOf(m)];
-  return 'Spalte \u201e'+(kf?kf.label:'Stationen')+'\u201c';
-}
 function openPoolAndScroll(feld){
+  openPoolKat(feld&&FELD_POOLKAT[feld]?FELD_POOLKAT[feld]:null);
+}
+/* Direkt eine Pool-Kategorie ansteuern (Keynotes, Schnupperkurse …) */
+function openPoolKat(kat){
   var sec=document.getElementById('poolSection');if(!sec)return;
   var target=null;
-  if(feld&&FELD_POOLKAT[feld]){
+  if(kat){
     var groups=sec.querySelectorAll('.pool-group');
     for(var i=0;i<groups.length;i++){
-      if(groups[i].getAttribute('data-kat')===FELD_POOLKAT[feld]){target=groups[i];break}
+      if(groups[i].getAttribute('data-kat')===kat){target=groups[i];break}
     }
   }
   if(!target)target=sec.querySelector('.pool-group');
@@ -815,17 +809,54 @@ function placeStation(m){
 }
 /* Slot-Tausch innerhalb einer Spalte (nur Einzel-Slot-Module) */
 function moveCell(ti,si,dir){
-  if(!plan||!plan.tracks[ti])return;
-  var g=plan.tracks[ti].grid,zi=si+dir;
-  if(zi<0||zi>=g.length)return;
-  var a=g[si],b=g[zi];
-  if(a&&a.cont)return;
-  if(b&&b.cont)return;
-  if(a){var ma=byId(a.id);if(ma&&(ma.slots||1)===2)return}
-  if(b){var mb=byId(b.id);if(mb&&(mb.slots||1)===2)return}
+  swapCells(ti,si,si+dir);
+}
+/* Prüft, ob zwei Slots derselben Spalte tauschbar sind (2-Slot-Module blockieren) */
+function canSwap(ti,a,b){
+  if(!plan||!plan.tracks[ti])return false;
+  var g=plan.tracks[ti].grid;
+  if(a<0||b<0||a>=g.length||b>=g.length||a===b)return false;
+  var ca=g[a],cb=g[b];
+  if(ca&&ca.cont)return false;
+  if(cb&&cb.cont)return false;
+  if(ca){var ma=byId(ca.id);if(ma&&(ma.slots||1)===2)return false}
+  if(cb){var mb=byId(cb.id);if(mb&&(mb.slots||1)===2)return false}
+  return true;
+}
+function swapCells(ti,a,b){
+  if(!canSwap(ti,a,b))return;
   pushState();
-  g[si]=b;g[zi]=a;
+  var g=plan.tracks[ti].grid,tmp=g[a];
+  g[a]=g[b];g[b]=tmp;
+  lastAddedId=null;
   showResults();
+}
+/* ── Drag & Drop (Zeiger/Maus). Auf Touch greifen die Pfeile. ── */
+var dragFrom=null;
+function cellDragStart(e,ti,si){
+  dragFrom={ti:ti,si:si};
+  if(e.dataTransfer){e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',ti+':'+si)}catch(err){}}
+  if(e.target&&e.target.classList)e.target.classList.add('cell-dragging');
+}
+function cellDragEnd(e){
+  dragFrom=null;
+  var els=document.querySelectorAll('.cell-dragging,.cell-dropzone');
+  for(var i=0;i<els.length;i++)els[i].classList.remove('cell-dragging','cell-dropzone');
+}
+function cellDragOver(e,ti,si){
+  if(!dragFrom||dragFrom.ti!==ti||!canSwap(ti,dragFrom.si,si))return;
+  e.preventDefault();
+  if(e.dataTransfer)e.dataTransfer.dropEffect='move';
+  if(e.currentTarget&&e.currentTarget.classList)e.currentTarget.classList.add('cell-dropzone');
+}
+function cellDragLeave(e){
+  if(e.currentTarget&&e.currentTarget.classList)e.currentTarget.classList.remove('cell-dropzone');
+}
+function cellDrop(e,ti,si){
+  e.preventDefault();
+  if(!dragFrom||dragFrom.ti!==ti)return cellDragEnd(e);
+  var from=dragFrom.si;dragFrom=null;
+  swapCells(ti,from,si);
 }
 
 /* Dopamin-Moment beim Ankommen: Zähler hochzählen + Konfetti in Markenfarben */
@@ -945,11 +976,17 @@ function buildPlanData(){
 }
 
 function planCellHTML(entry,feld,ti,si,slotsTotal){
-  if(!entry)return '<div class="plan-cell empty"><button class="cell-add" onclick="openPoolAndScroll(\''+(feld||'')+'\')">+ Modul wählen</button></div>';
+  var dnd=(typeof ti==='number')
+    ?' ondragover="cellDragOver(event,'+ti+','+si+')" ondragleave="cellDragLeave(event)" ondrop="cellDrop(event,'+ti+','+si+')"'
+    :'';
+  if(!entry)return '<div class="plan-cell empty"'+dnd+'><button class="cell-add" onclick="openPoolAndScroll(\''+(feld||'')+'\')">+ Modul wählen</button></div>';
   /* Zell-Tag = Primärthema des Moduls (nicht das Spalten-Label) */
   var tag=THEME_LABELS[entry.m.themen[0]]||'Modul';
   var flash=(!entry.cont&&lastAddedId===entry.m.id)?' cell-flash':'';
-  var h='<div class="plan-cell'+(entry.cont?'':' has-x')+flash+'" title="'+escAttr(entry.m.desc)+'">';
+  var ziehbar=(!entry.cont&&(entry.m.slots||1)===1&&typeof ti==='number');
+  var h='<div class="plan-cell'+(entry.cont?'':' has-x')+flash+(ziehbar?' cell-draggable':'')+'"'+dnd+
+    (ziehbar?' draggable="true" ondragstart="cellDragStart(event,'+ti+','+si+')" ondragend="cellDragEnd(event)"':'')+
+    ' title="'+escAttr(entry.m.desc)+'">';
   if(!entry.cont)h+=xBtn(entry.m.id);
   h+='<span class="cell-track">'+esc(tag)+'</span>'+esc(entry.m.name);
   h+=entry.cont?'<span class="cell-note">Fortsetzung (Teil 2)</span>':'<span class="cell-note">'+entry.m.dauer+' Min'+(entry.m.hinweis?' · '+esc(entry.m.hinweis):'')+'</span>';
@@ -976,6 +1013,13 @@ function buildPlanHTML(){
     if(note)h+='<span class="cell-note">'+esc(note)+'</span>';
     h+='</div></div></div>';
   }
+  /* Freier Platz in einer Vollzeile: bleibt sichtbar und ist direkt neu befüllbar */
+  function fullSlot(time,label,kat){
+    h+='<div class="plan-row"><div class="plan-time">'+time+'</div>';
+    h+='<div class="plan-cells" style="grid-template-columns:1fr"><div class="plan-cell full empty">';
+    h+='<button class="cell-add" onclick="openPoolKat(\''+escAttr(kat)+'\')">+ '+esc(label)+'</button>';
+    h+='</div></div></div>';
+  }
   /* Kopfzeile mit Kompetenzfeld-Spalten */
   if(d.tracks.length>1){
     h+='<div class="plan-row plan-header-row"><div class="plan-time"></div><div class="plan-cells" style="'+colStyle+'">';
@@ -985,12 +1029,14 @@ function buildPlanHTML(){
     h+='</div></div>';
   }
   if(d.opener)fullRow('09:00 – 09:45',esc(d.opener.name),'Gemeinsamer Auftakt · '+d.opener.dauer+' Min',d.opener.id);
+  else fullSlot('09:00 – 09:45','Auftakt-Keynote wählen','Keynotes & Impulse');
   var slotTimes=d.halb
     ?['10:00 – 10:45','11:00 – 11:45']
     :['10:00 – 10:45','11:00 – 11:45','13:00 – 13:45','14:00 – 14:45'];
   for(var s=0;s<d.slots;s++){
     if(!d.halb&&s===2){
       if(d.mittag)fullRow('12:00 – 12:30',esc(d.mittag.name),'Impuls vor der Pause',d.mittag.id);
+      else fullSlot('12:00 – 12:30','Impuls vor der Pause wählen (optional)','Keynotes & Impulse');
       fullRow(d.mittag?'12:30 – 13:00':'12:00 – 13:00','Mittagspause');
     }
     h+='<div class="plan-row"><div class="plan-time">'+slotTimes[s]+(s===0?'<span class="cell-note" style="display:block;font-weight:400">+ 15 Min für eure Fragen</span>':'')+'</div>';
@@ -998,11 +1044,15 @@ function buildPlanHTML(){
     d.tracks.forEach(function(t,ti){h+=planCellHTML(t.grid?t.grid[s]:null,t.feld,ti,s,d.slots)});
     h+='</div></div>';
   }
+  var skTime=d.halb?'12:00 – 13:00':'15:00 – 16:00';
   if(d.sks.length){
     var sk=d.sks.map(function(m){return '<span class="cell-chip'+(m.id===lastAddedId?' cell-flash':'')+'">'+esc(m.name)+xBtn(m.id)+'</span>'}).join('');
-    fullRow(d.halb?'12:00 – 13:00':'15:00 – 16:00',sk,'Zum Mitmachen, parallel zur Auswahl');
-  }
+    /* Immer eine offene Kachel zum Ergänzen weiterer Schnupperkurse */
+    sk+='<button class="cell-chip chip-add" onclick="openPoolKat(\'Schnupperkurse &amp; Abschluss\')">+ Schnupperkurs</button>';
+    fullRow(skTime,sk,'Zum Mitmachen, parallel zur Auswahl');
+  }else fullSlot(skTime,'Schnupperkurs wählen (optional)','Schnupperkurse & Abschluss');
   if(d.ausklang)fullRow('im Anschluss',esc(d.ausklang.name),d.ausklang.dauer+' Min',d.ausklang.id);
+  else fullSlot('im Anschluss','Tagesausklang wählen (optional)','Schnupperkurse & Abschluss');
   return '<div class="plan-tbl">'+h+'</div>';
 }
 function planHintText(){
