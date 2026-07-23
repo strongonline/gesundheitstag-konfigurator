@@ -259,6 +259,9 @@ var TOTAL_STEPS=QUESTIONS.length;
 var RESULT_SLIDE=TOTAL_STEPS+1,FORM_SLIDE=TOTAL_STEPS+2;
 var focusIdx=-1;
 var ROOT=null; /* Mount-Element (#gtk-root), gesetzt in boot() */
+var plan=null;                    /* materialisierter Tagesplan (positionsfest) */
+var planHistory=[],planFuture=[]; /* Undo/Redo-Schnappschüsse */
+var lastAddedId=null,scrollPlanAfterRender=false,addFailMsg=null;
 
 /* ═════════ HELPERS ═════════ */
 function byId(id){for(var i=0;i<MODULES.length;i++)if(MODULES[i].id===id)return MODULES[i];return null}
@@ -443,7 +446,6 @@ function updateChrome(){
   var showUI=currentSlide>0;
   document.getElementById('stepIndicator').className='step-indicator'+(showUI&&currentSlide<=TOTAL_STEPS?' visible':'');
   document.getElementById('backBtn').className='back-btn'+(showUI?' visible':'');
-  document.getElementById('logo').className='logo'+(showUI?' visible':'');
   var pips=document.querySelectorAll('.pip'),ac=answeredCount();
   pips.forEach(function(p,i){p.className='pip';if(i<ac)p.classList.add('done');if(i===ac)p.classList.add('active')});
   var pct=currentSlide===0?0:currentSlide>TOTAL_STEPS?100:Math.round((ac/TOTAL_STEPS)*100);
@@ -473,13 +475,14 @@ function goBack(){
   currentSlide=target;
   document.getElementById('slide-'+target).classList.add('active');
   resultCelebrated=false;
+  plan=null;planHistory=[];planFuture=[];lastAddedId=null;addFailMsg=null;
   refreshCart(false);
   updateChrome();
   focusIdx=-1;
 }
 function resetFunnel(){
   QUESTIONS.forEach(function(q){answers[q.key]=q.multi?[]:null});
-  cart=[];recoInterest=null;slideHistory=[0];openPools={};resultCelebrated=false;extraFelder=[];addColOpen=false;
+  cart=[];recoInterest=null;slideHistory=[0];openPools={};resultCelebrated=false;extraFelder=[];addColOpen=false;plan=null;planHistory=[];planFuture=[];lastAddedId=null;addFailMsg=null;
   document.querySelectorAll('.slide').forEach(function(s){s.classList.remove('active','exit-up')});
   currentSlide=0;
   document.getElementById('slide-0').classList.add('active');
@@ -533,7 +536,7 @@ function selectAnswer(el){
 function advance(step){
   refreshCart(true);
   if(step<TOTAL_STEPS){buildQuestion(step+1);goToSlide(step+1)}
-  else{recoInterest=null;extraFelder=[];addColOpen=false;showResults()}
+  else{recoInterest=null;extraFelder=[];addColOpen=false;plan=packPlan(recommend(answers));planHistory=[];planFuture=[];lastAddedId=null;addFailMsg=null;showResults()}
 }
 
 /* ═════════ ERGEBNIS ═════════ */
@@ -554,7 +557,7 @@ function sublineText(){
 }
 function showResults(){
   var inner=document.getElementById('resultInner');
-  var total=cart.length;
+  var total=planIds().length;
   /* Schnupper-Wunsch: Pool-Gruppe beim ersten Ankommen geöffnet */
   if(hasTopic(answers,'schnupper')&&openPools['Schnupperkurse & Abschluss']===undefined){
     openPools['Schnupperkurse & Abschluss']=true;
@@ -579,7 +582,15 @@ function showResults(){
     }
   }
   h+='</div>';
-  h+='<p class="plan-hint">'+esc(planHintText())+'</p>';
+  var hintTxt=planHintText();
+  if(addFailMsg){hintTxt+=' '+addFailMsg;addFailMsg=null}
+  h+='<p class="plan-hint">'+esc(hintTxt)+'</p>';
+  if(planHistory.length||planFuture.length){
+    h+='<div class="plan-undo-row">';
+    h+='<button class="undo-btn"'+(planHistory.length?'':' disabled')+' onclick="undoPlan()">↶ Rückgängig</button>';
+    h+='<button class="undo-btn"'+(planFuture.length?'':' disabled')+' onclick="redoPlan()">↷ Wiederholen</button>';
+    h+='</div>';
+  }
 
   /* Preis & Förderung */
   h+='<div class="price-box"><div class="price-line">'+esc(PRICING.preis)+'</div>';
@@ -604,12 +615,13 @@ function showResults(){
   h+='<button class="btn-ghost" onclick="resetFunnel()">Neu starten</button></div>';
 
   /* 2) Modulpool */
+  var inPlan=planIds();
   h+='<div class="pool" id="poolSection"><div class="r-group-label">Weitere Module entdecken</div>';
   h+='<p class="r-sub" style="font-size:.88rem;margin-bottom:1rem">Bastel gern weiter: Ergänze Module, tausche Vorschläge aus oder kombiniere Themen neu – dein Tagesplan oben passt sich sofort an.</p>';
   var kats=[];MODULES.forEach(function(m){if(kats.indexOf(m.kat)<0)kats.push(m.kat)});
   kats.forEach(function(kat){
     var items=MODULES.filter(function(m){
-      return m.kat===kat&&cart.indexOf(m.id)<0&&!(m.only==='remote'&&answers.audience!=='remote');
+      return m.kat===kat&&inPlan.indexOf(m.id)<0&&!(m.only==='remote'&&answers.audience!=='remote');
     });
     if(!items.length)return;
     h+='<div class="pool-group'+(openPools[kat]?' open':'')+'" data-kat="'+escAttr(kat)+'">';
@@ -620,6 +632,7 @@ function showResults(){
     items.forEach(function(m){
       h+='<div class="pool-item"><div class="pool-item-body">';
       h+='<div class="pool-item-name">'+esc(m.name)+'</div>';
+      h+='<div class="pool-dest">→ '+esc(destLabel(m))+'</div>';
       h+='<div class="pool-item-desc">'+esc(m.desc)+'</div></div>';
       h+='<button class="pool-add" title="Zum Tagesplan hinzufügen" onclick="addModule(\''+m.id+'\')">+</button></div>';
     });
@@ -633,8 +646,14 @@ function showResults(){
   h+='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button></div>';
 
   inner.innerHTML=h;
+  if(scrollPlanAfterRender){
+    scrollPlanAfterRender=false;
+    var pc=inner.querySelector('.plan-card');
+    if(pc&&pc.scrollIntoView)pc.scrollIntoView({behavior:'smooth',block:'start'});
+    setTimeout(function(){lastAddedId=null},1600);
+  }
   renderCartPanel();
-  document.getElementById('cartCount').textContent=cart.length;
+  document.getElementById('cartCount').textContent=total;
   if(currentSlide!==RESULT_SLIDE)goToSlide(RESULT_SLIDE);
   if(!resultCelebrated){resultCelebrated=true;celebrate(total)}
 }
@@ -644,6 +663,15 @@ function togglePoolEl(btn){
 }
 var FELD_POOLKAT={bewegung:'Bewegung & Ergonomie',mental:'Mentale Gesundheit & Regeneration',
   ernaehrung:'Ernährung',checks:'Gesundheitschecks'};
+/* Wohin wandert dieses Modul im Plan? (für die Pool-Anzeige) */
+function destLabel(m){
+  if(m.typ==='schnupperkurs')return 'Abschluss-Runde (Schnupperkurse)';
+  if(m.typ==='baustein')return 'Gemeinsamer Tagesausklang';
+  if(m.id==='kn_stark'||m.id==='kn_online')return 'Gemeinsamer Auftakt';
+  if(m.id==='kn_ernaehrung')return 'Impuls vor der Mittagspause';
+  var kf=KOMPETENZFELDER[feldOf(m)];
+  return 'Spalte \u201e'+(kf?kf.label:'Stationen')+'\u201c';
+}
 function openPoolAndScroll(feld){
   var sec=document.getElementById('poolSection');if(!sec)return;
   var target=null;
@@ -654,6 +682,12 @@ function openPoolAndScroll(feld){
     }
   }
   if(!target)target=sec.querySelector('.pool-group');
+  if(target){
+    target.classList.remove('pool-flash');
+    void (target.offsetWidth||0);
+    target.classList.add('pool-flash');
+    setTimeout(function(){if(target)target.classList.remove('pool-flash')},1700);
+  }
   if(target&&!target.classList.contains('open')){
     target.classList.add('open');
     openPools[target.getAttribute('data-kat')]=true;
@@ -661,28 +695,139 @@ function openPoolAndScroll(feld){
   (target||sec).scrollIntoView({behavior:'smooth',block:'start'});
 }
 function toggleAddCol(){addColOpen=!addColOpen;showResults()}
+
+/* ═════════ PLAN-STATE (positionsfest, mit Undo/Redo) ═════════
+   Der Plan wird nach dem Funnel EINMAL gepackt (packPlan) und ist danach ein
+   fester Stundenplan: Entfernen hinterlässt eine Lücke, Hinzufügen nimmt den
+   ersten freien Slot, Verschieben tauscht Slots – nichts "rutscht nach". */
+function planIds(){
+  if(!plan)return [];
+  var ids=[];
+  if(plan.opener)ids.push(plan.opener);
+  if(plan.mittag)ids.push(plan.mittag);
+  plan.tracks.forEach(function(t){t.grid.forEach(function(c){if(c&&!c.cont)ids.push(c.id)})});
+  plan.sks.forEach(function(id){ids.push(id)});
+  if(plan.ausklang)ids.push(plan.ausklang);
+  return ids;
+}
+function pushState(){
+  planHistory.push(JSON.stringify(plan));
+  if(planHistory.length>40)planHistory.shift();
+  planFuture=[];
+}
+function undoPlan(){
+  if(!planHistory.length)return;
+  planFuture.push(JSON.stringify(plan));
+  plan=JSON.parse(planHistory.pop());
+  showResults();
+}
+function redoPlan(){
+  if(!planFuture.length)return;
+  planHistory.push(JSON.stringify(plan));
+  plan=JSON.parse(planFuture.pop());
+  showResults();
+}
+function trackOrderPos(f){var i=FELD_ORDER.indexOf(f);return i<0?99:i}
 function addFeldColumn(f){
-  if(extraFelder.indexOf(f)<0)extraFelder.push(f);
+  if(!plan)return;
+  pushState();
+  var nt={feld:f,grid:[]};for(var k=0;k<plan.slots;k++)nt.grid.push(null);
+  var at=plan.tracks.length;
+  for(var i=0;i<plan.tracks.length;i++){
+    if(trackOrderPos(plan.tracks[i].feld)>trackOrderPos(f)){at=i;break}
+  }
+  plan.tracks.splice(at,0,nt);
   addColOpen=false;showResults();
 }
 function removeTrack(i){
-  var d=buildPlanData();
-  var tr=d.tracks[i];if(!tr)return;
-  tr.items.forEach(function(m){
-    var ix=cart.indexOf(m.id);if(ix>=0)cart.splice(ix,1);
-  });
-  extraFelder=extraFelder.filter(function(x){return x!==tr.feld});
+  if(!plan||!plan.tracks[i])return;
+  pushState();
+  plan.tracks.splice(i,1);
   showResults();
 }
+/* Klick außerhalb schließt das Spalten-Menü */
+document.addEventListener('click',function(e){
+  if(!addColOpen)return;
+  var t=e.target;
+  if(t&&t.closest&&t.closest('.add-col-menu,.add-col-fab'))return;
+  addColOpen=false;showResults();
+});
 function toggleReco(key){recoInterest=recoInterest===key?null:key;showResults()}
 function removeModule(id){
-  var ix=cart.indexOf(id);if(ix>=0)cart.splice(ix,1);
+  if(!plan)return;
+  pushState();
+  if(plan.opener===id)plan.opener=null;
+  else if(plan.mittag===id)plan.mittag=null;
+  else if(plan.ausklang===id)plan.ausklang=null;
+  else if(plan.sks.indexOf(id)>=0)plan.sks=plan.sks.filter(function(x){return x!==id});
+  else plan.tracks.forEach(function(t){
+    t.grid=t.grid.map(function(c){return c&&c.id===id?null:c});
+  });
   showResults();
 }
 function addModule(id){
-  if(cart.indexOf(id)<0)cart.push(id);
+  if(!plan||planIds().indexOf(id)>=0)return;
+  var m=byId(id);if(!m)return;
+  pushState();
+  var placed=true;
+  if(id==='kn_stark'||id==='kn_online'){
+    if(!plan.opener)plan.opener=id;else placed=placeStation(m);
+  }else if(id==='kn_ernaehrung'&&!plan.halb){
+    if(!plan.mittag)plan.mittag=id;else placed=placeStation(m);
+  }else if(m.typ==='schnupperkurs'){plan.sks.push(id)}
+  else if(m.typ==='baustein'){plan.ausklang=id}
+  else placed=placeStation(m);
+  if(!placed){
+    planHistory.pop();
+    addFailMsg='Für \u201e'+m.name+'\u201c ist gerade kein Slot frei \u2013 entferne ein Modul oder eine Spalte, dann klappt es.';
+    showResults();return;
+  }
+  lastAddedId=id;scrollPlanAfterRender=true;
   showResults();
 }
+/* Station in den ersten freien Slot ihres Kompetenzfelds setzen;
+   ist das Feld voll, entsteht eine neue Spalte (bis zum Spalten-Deckel). */
+function placeStation(m){
+  var f=feldOf(m),need=m.slots||1;
+  var ftracks=plan.tracks.filter(function(t){return t.feld===f});
+  for(var ti=0;ti<ftracks.length;ti++){
+    var g=ftracks[ti].grid;
+    for(var s=0;s+need<=plan.slots;s++){
+      var frei=true;
+      for(var k=0;k<need;k++)if(g[s+k])frei=false;
+      if(frei){
+        g[s]={id:m.id};
+        if(need===2)g[s+1]={id:m.id,cont:true};
+        return true;
+      }
+    }
+  }
+  var maxT=RULES.maxTracks[answers.size||'m']||4;
+  if(plan.tracks.length>=maxT)return false;
+  var nt={feld:f,grid:[]};for(var k2=0;k2<plan.slots;k2++)nt.grid.push(null);
+  nt.grid[0]={id:m.id};if(need===2)nt.grid[1]={id:m.id,cont:true};
+  var at=plan.tracks.length;
+  for(var i=0;i<plan.tracks.length;i++){
+    if(trackOrderPos(plan.tracks[i].feld)>trackOrderPos(f)){at=i;break}
+  }
+  plan.tracks.splice(at,0,nt);
+  return true;
+}
+/* Slot-Tausch innerhalb einer Spalte (nur Einzel-Slot-Module) */
+function moveCell(ti,si,dir){
+  if(!plan||!plan.tracks[ti])return;
+  var g=plan.tracks[ti].grid,zi=si+dir;
+  if(zi<0||zi>=g.length)return;
+  var a=g[si],b=g[zi];
+  if(a&&a.cont)return;
+  if(b&&b.cont)return;
+  if(a){var ma=byId(a.id);if(ma&&(ma.slots||1)===2)return}
+  if(b){var mb=byId(b.id);if(mb&&(mb.slots||1)===2)return}
+  pushState();
+  g[si]=b;g[zi]=a;
+  showResults();
+}
+
 /* Dopamin-Moment beim Ankommen: Zähler hochzählen + Konfetti in Markenfarben */
 function celebrate(total){
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -716,80 +861,105 @@ function celebrate(total){
 /* ═════════ TAGESPLAN ═════════ */
 function xBtn(id){return '<button class="cell-x" title="Aus dem Plan entfernen" onclick="removeModule(\''+id+'\')">✕</button>'}
 
-function buildPlanData(){
+/* Empfehlungs-Auswahl einmalig in einen festen Plan packen */
+function packPlan(ids){
   var opener=null,mittag=null,stations=[],sks=[],ausklang=null;
-  cart.forEach(function(id){
+  ids.forEach(function(id){
     var m=byId(id);if(!m)return;
-    if(id==='kn_stark'||id==='kn_online'){if(!opener)opener=m;else stations.push(m)}
-    else if(id==='kn_ernaehrung')mittag=m;
-    else if(m.typ==='schnupperkurs')sks.push(m);
-    else if(m.typ==='baustein')ausklang=m;
+    if(id==='kn_stark'||id==='kn_online'){if(!opener)opener=id;else stations.push(m)}
+    else if(id==='kn_ernaehrung')mittag=id;
+    else if(m.typ==='schnupperkurs')sks.push(id);
+    else if(m.typ==='baustein')ausklang=id;
     else stations.push(m);
   });
   var slots=slotCount();
   var maxT=RULES.maxTracks[answers.size||'m']||4;
-  /* Stationen je Kompetenzfeld bündeln (eine Spalte = eine Person = ein Feld) */
   var byFeld={};
-  stations.forEach(function(m){var f=feldOf(m);(byFeld[f]=byFeld[f]||[]).push(m)});
-  var felder=FELD_ORDER.filter(function(f){return byFeld[f]||extraFelder.indexOf(f)>=0});
+  stations.forEach(function(m){var ff=feldOf(m);(byFeld[ff]=byFeld[ff]||[]).push(m)});
+  var felder=FELD_ORDER.filter(function(ff){return byFeld[ff]});
   var needs={},cols={};
-  felder.forEach(function(f){
-    needs[f]=(byFeld[f]||[]).reduce(function(s,m){return s+(m.slots||1)},0);
-    cols[f]=Math.max(1,Math.ceil(needs[f]/slots));
+  felder.forEach(function(ff){
+    needs[ff]=(byFeld[ff]||[]).reduce(function(s,m){return s+(m.slots||1)},0);
+    cols[ff]=Math.max(1,Math.ceil(needs[ff]/slots));
   });
-  /* Gesamtdeckel: Zusatzspalten (I/II) der bedarfsschwächsten Felder abbauen */
-  var total=felder.reduce(function(s,f){return s+cols[f]},0);
+  var total=felder.reduce(function(s,ff){return s+cols[ff]},0);
   while(total>maxT){
     var cand=null;
-    felder.forEach(function(f){
-      if(cols[f]>1&&(cand===null||needs[f]<needs[cand]))cand=f;
+    felder.forEach(function(ff){
+      if(cols[ff]>1&&(cand===null||needs[ff]<needs[cand]))cand=ff;
     });
     if(cand===null)break;
     cols[cand]--;total--;
   }
-  /* Tracks anlegen, feldrein befüllen (First-Fit, 2-Slot-Module zuerst) */
-  var tracks=[],overflow=[];
-  var roman=['I','II','III','IV','V'];
-  felder.forEach(function(f){
+  var tracks=[];
+  felder.forEach(function(ff){
     var ftracks=[];
-    for(var i=0;i<cols[f];i++){
-      ftracks.push({feld:f,label:KOMPETENZFELDER[f].label+(cols[f]>1?' '+roman[i]:''),items:[],used:0});
-    }
-    var mods=(byFeld[f]||[]).slice().sort(function(a,b){return (b.slots||1)-(a.slots||1)});
+    for(var i=0;i<cols[ff];i++)ftracks.push({feld:ff,used:0,mods:[]});
+    var mods=(byFeld[ff]||[]).slice().sort(function(a,b){return (b.slots||1)-(a.slots||1)});
     mods.forEach(function(m){
       var need=m.slots||1,best=null,bestFree=-1;
       ftracks.forEach(function(tr){
         var free=slots-tr.used;
         if(free>=need&&free>bestFree){bestFree=free;best=tr}
       });
-      if(best){best.items.push(m);best.used+=need}
-      else overflow.push(m);
+      if(best){best.mods.push(m);best.used+=need}
     });
-    tracks=tracks.concat(ftracks);
+    ftracks.forEach(function(tr){
+      var grid=[];
+      tr.mods.forEach(function(m){grid.push({id:m.id});if((m.slots||1)===2)grid.push({id:m.id,cont:true})});
+      while(grid.length<slots)grid.push(null);
+      tracks.push({feld:ff,grid:grid});
+    });
   });
-  /* Grid je Track füllen (2-Slot-Module belegen zwei Zeilen in Folge) */
-  tracks.forEach(function(tr){
-    var grid=[];
-    tr.items.forEach(function(m){grid.push({m:m});if((m.slots||1)===2)grid.push({m:m,cont:true})});
-    while(grid.length<slots)grid.push(null);
-    tr.grid=grid;
-  });
-  if(!tracks.length){
-    var g=[];for(var k=0;k<slots;k++)g.push(null);
-    tracks=[{feld:'mental',label:'Stationen',items:[],grid:g}];
-  }
-  return{opener:opener,mittag:mittag,tracks:tracks,sks:sks,ausklang:ausklang,overflow:overflow,
-    felder:felder,slots:slots,halb:answers.duration==='halb'};
+  return{opener:opener,mittag:mittag,sks:sks,ausklang:ausklang,slots:slots,
+    halb:answers.duration==='halb',tracks:tracks};
 }
 
-function planCellHTML(entry,feld){
+/* Sicht auf den Plan-State für Rendering, Zusammenfassung und PDF */
+function buildPlanData(){
+  var slots=plan?plan.slots:slotCount();
+  function leer(){var g=[];for(var k=0;k<slots;k++)g.push(null);return g}
+  if(!plan){
+    return{opener:null,mittag:null,tracks:[{feld:'mental',label:'Stationen',items:[],grid:leer()}],
+      sks:[],ausklang:null,felder:[],slots:slots,halb:answers.duration==='halb'};
+  }
+  var roman=['I','II','III','IV','V'];
+  var counts={};plan.tracks.forEach(function(t){counts[t.feld]=(counts[t.feld]||0)+1});
+  var seen={};
+  var tracks=plan.tracks.map(function(t){
+    seen[t.feld]=(seen[t.feld]||0)+1;
+    var label=KOMPETENZFELDER[t.feld]?KOMPETENZFELDER[t.feld].label:'Stationen';
+    if(counts[t.feld]>1)label+=' '+roman[seen[t.feld]-1];
+    var grid=t.grid.map(function(c){
+      if(!c)return null;
+      var m=byId(c.id);return m?{m:m,cont:!!c.cont}:null;
+    });
+    var items=[];grid.forEach(function(e){if(e&&!e.cont)items.push(e.m)});
+    return{feld:t.feld,label:label,items:items,grid:grid};
+  });
+  if(!tracks.length)tracks=[{feld:'mental',label:'Stationen',items:[],grid:leer()}];
+  var felder=[];tracks.forEach(function(t){if(felder.indexOf(t.feld)<0)felder.push(t.feld)});
+  return{opener:plan.opener?byId(plan.opener):null,mittag:plan.mittag?byId(plan.mittag):null,
+    tracks:tracks,sks:plan.sks.map(byId).filter(Boolean),ausklang:plan.ausklang?byId(plan.ausklang):null,
+    felder:felder,slots:slots,halb:plan.halb};
+}
+
+function planCellHTML(entry,feld,ti,si,slotsTotal){
   if(!entry)return '<div class="plan-cell empty"><button class="cell-add" onclick="openPoolAndScroll(\''+(feld||'')+'\')">+ Modul wählen</button></div>';
   /* Zell-Tag = Primärthema des Moduls (nicht das Spalten-Label) */
   var tag=THEME_LABELS[entry.m.themen[0]]||'Modul';
-  var h='<div class="plan-cell'+(entry.cont?'':' has-x')+'" title="'+escAttr(entry.m.desc)+'">';
+  var flash=(!entry.cont&&lastAddedId===entry.m.id)?' cell-flash':'';
+  var h='<div class="plan-cell'+(entry.cont?'':' has-x')+flash+'" title="'+escAttr(entry.m.desc)+'">';
   if(!entry.cont)h+=xBtn(entry.m.id);
   h+='<span class="cell-track">'+esc(tag)+'</span>'+esc(entry.m.name);
   h+=entry.cont?'<span class="cell-note">Fortsetzung (Teil 2)</span>':'<span class="cell-note">'+entry.m.dauer+' Min'+(entry.m.hinweis?' · '+esc(entry.m.hinweis):'')+'</span>';
+  /* Zeitliches Verschieben innerhalb der Spalte (nur Einzel-Slot-Module) */
+  if(!entry.cont&&(entry.m.slots||1)===1&&typeof ti==='number'){
+    var mv='';
+    if(si>0)mv+='<button class="cell-move" title="Früher einplanen" onclick="moveCell('+ti+','+si+',-1)">↑</button>';
+    if(si<slotsTotal-1)mv+='<button class="cell-move" title="Später einplanen" onclick="moveCell('+ti+','+si+',1)">↓</button>';
+    if(mv)h+='<span class="cell-move-row">'+mv+'</span>';
+  }
   h+='</div>';
   return h;
 }
@@ -825,11 +995,11 @@ function buildPlanHTML(){
     }
     h+='<div class="plan-row"><div class="plan-time">'+slotTimes[s]+(s===0?'<span class="cell-note" style="display:block;font-weight:400">+ 15 Min für eure Fragen</span>':'')+'</div>';
     h+='<div class="plan-cells" style="'+colStyle+'">';
-    d.tracks.forEach(function(t){h+=planCellHTML(t.grid?t.grid[s]:null,t.feld)});
+    d.tracks.forEach(function(t,ti){h+=planCellHTML(t.grid?t.grid[s]:null,t.feld,ti,s,d.slots)});
     h+='</div></div>';
   }
   if(d.sks.length){
-    var sk=d.sks.map(function(m){return '<span class="cell-chip">'+esc(m.name)+xBtn(m.id)+'</span>'}).join('');
+    var sk=d.sks.map(function(m){return '<span class="cell-chip'+(m.id===lastAddedId?' cell-flash':'')+'">'+esc(m.name)+xBtn(m.id)+'</span>'}).join('');
     fullRow(d.halb?'12:00 – 13:00':'15:00 – 16:00',sk,'Zum Mitmachen, parallel zur Auswahl');
   }
   if(d.ausklang)fullRow('im Anschluss',esc(d.ausklang.name),d.ausklang.dauer+' Min',d.ausklang.id);
@@ -845,10 +1015,6 @@ function planHintText(){
   if(answers.duration==='mehr')base='Vorschau für einen Beispieltag – bei mehrtägigen Formaten wiederholen und vertiefen sich die Module. '+base;
   if(answers.standorte==='zweidrei'||answers.standorte==='vierplus'){
     base+=' Der Plan gilt je Standort – die Durchführung über eure Standorte takten wir gemeinsam.';
-  }
-  if(d.overflow.length){
-    base+=' Hinweis: '+d.overflow.length+' Modul'+(d.overflow.length>1?'e passen':' passt')+
-      ' aktuell nicht mehr in die Slots ('+d.overflow.map(function(m){return m.name}).join(', ')+') – ideal für Wiederholungen oder wir priorisieren gemeinsam.';
   }
   return base;
 }
@@ -867,9 +1033,9 @@ function showForm(){
   h+='<div class="f-field wide"><label class="f-label" for="fTermin">Wunschtermin / Zeitraum</label><input class="f-input" id="fTermin" type="text" placeholder="z. B. September 2026 oder noch offen"></div>';
   h+='<div class="f-field wide"><label class="f-label" for="fMsg">Nachricht (optional)</label><textarea class="f-area" id="fMsg" placeholder="Gibt es etwas, das wir vorab wissen sollten?"></textarea></div>';
   h+='</div>';
-  h+='<div class="f-summary"><strong>Eure Konfiguration:</strong> '+cart.length+' Module';
+  h+='<div class="f-summary"><strong>Eure Konfiguration:</strong> '+planIds().length+' Module';
   if(recoInterest&&recoById(recoInterest))h+=' · zusätzliches Interesse: '+esc(recoById(recoInterest).title);
-  h+='<br>'+cart.map(function(id){var m=byId(id);return m?esc(m.name):''}).filter(Boolean).join(' · ')+'</div>';
+  h+='<br>'+planIds().map(function(id){var m=byId(id);return m?esc(m.name):''}).filter(Boolean).join(' · ')+'</div>';
   h+='<p class="f-error" id="fError">Bitte fülle Name, Firma und eine gültige E-Mail-Adresse aus.</p>';
   h+='<div class="r-actions">';
   h+='<button class="btn-primary" id="submitBtn" onclick="submitRequest()">Anfrage senden ';
@@ -891,7 +1057,7 @@ function buildSummaryText(){
     lines.push('- '+q.label+': '+txt);
   });
   lines.push('','Module:');
-  cart.forEach(function(id){var m=byId(id);if(m)lines.push('- '+m.name)});
+  planIds().forEach(function(id){var m=byId(id);if(m)lines.push('- '+m.name)});
   if(recoInterest&&recoById(recoInterest))lines.push('','Zusätzliches Interesse: '+recoById(recoInterest).title);
   return lines.join('\n');
 }
@@ -912,7 +1078,7 @@ function buildPayload(){
     },
     antworten:{size:answers.size,standorte:answers.standorte,audience:answers.audience,
       occasion:answers.occasion,topics:answers.topics,format:answers.format,duration:answers.duration},
-    module:cart.slice(),
+    module:planIds(),
     schnupperWunsch:hasTopic(answers,'schnupper'),
     empfehlungskarte:recoInterest,
     tagesplanTracks:d.tracks.map(function(t){return{track:t.label,kompetenzfeld:t.feld,
@@ -1029,22 +1195,25 @@ function buildPrintHTML(){
   h+='body{font-family:"Cera Pro",system-ui,-apple-system,Arial,sans-serif;color:#1a1c1a;font-size:10.5pt;line-height:1.45;padding:4mm}';
   h+='.kopf{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #006e1d;padding-bottom:4mm;margin-bottom:5mm}';
   h+='.kopf h1{font-size:16pt;color:#006e1d}.kopf .sub{font-size:9pt;color:#5c6660;margin-top:1mm}';
-  h+='.marke{font-weight:800;font-size:11pt}';
+  h+='.logo{height:9mm}';
   h+='.antworten{display:flex;flex-wrap:wrap;gap:1.5mm 8mm;font-size:9pt;margin-bottom:5mm}';
   h+='.antworten b{color:#006e1d}';
-  h+='table{width:100%;border-collapse:collapse;margin-bottom:5mm}';
+  h+='.tblwrap{border:1px solid #d8d5d0;border-radius:3mm;overflow:hidden;margin-bottom:5mm}';
+  h+='table{width:100%;border-collapse:collapse}';
   h+='th{background:#006e1d;color:#fff;font-size:8.5pt;text-transform:uppercase;letter-spacing:.04em;padding:2.2mm 2.5mm;text-align:left}';
-  h+='td{border:1px solid #d8d5d0;padding:2.2mm 2.5mm;vertical-align:top;font-size:9.5pt}';
+  h+='td{border-top:1px solid #d8d5d0;border-left:1px solid #d8d5d0;padding:2.2mm 2.5mm;vertical-align:top;font-size:9.5pt}';
+  h+='td:first-child{border-left:0}';
+  h+='th+th{border-left:1px solid rgba(255,255,255,.28)}';
   h+='td.zeit{white-space:nowrap;font-weight:700;color:#006e1d;width:24mm}';
   h+='td.voll{background:#eef7f0}';
   h+='.mod b{display:block}.mod span{color:#5c6660;font-size:8.5pt}';
   h+='.leer{color:#b9b5af;font-style:italic;font-size:8.5pt}';
-  h+='.preis{background:#eef7f0;border-left:3px solid #38ba47;padding:2.5mm 4mm;font-size:9.5pt;margin-bottom:3mm}';
+  h+='.preis{background:#eef7f0;border-left:3px solid #38ba47;border-radius:2mm;padding:2.5mm 4mm;font-size:9.5pt;margin-bottom:3mm}';
   h+='.fuss{border-top:1px solid #d8d5d0;padding-top:2.5mm;font-size:8.5pt;color:#5c6660;display:flex;justify-content:space-between;gap:6mm}';
   h+='</style></head><body>';
   h+='<div class="kopf"><div><h1>Euer Gesundheitstag – Tagesplan</h1>';
   h+='<div class="sub">Unverbindliche Vorschau aus dem Konfigurator · Stand '+datum+'</div></div>';
-  h+='<div class="marke">Strong Partners</div></div>';
+  h+='<img class="logo" alt="Strong Partners" src="https://cdn.prod.website-files.com/69970053c4693c62ff0f6079/699703a5c2f4d20de88da1c6_Logo.svg"></div>';
   h+='<div class="antworten">';
   QUESTIONS.forEach(function(q){
     var v=answers[q.key],txt;
@@ -1054,7 +1223,7 @@ function buildPrintHTML(){
   });
   h+='</div>';
   var cols=d.tracks.length||1;
-  h+='<table><thead><tr><th>Uhrzeit</th>';
+  h+='<div class="tblwrap"><table><thead><tr><th>Uhrzeit</th>';
   if(cols>1){d.tracks.forEach(function(t){h+='<th>'+esc(t.label)+'</th>'})}
   else{h+='<th>Programm</th>'}
   h+='</tr></thead><tbody>';
@@ -1077,7 +1246,7 @@ function buildPrintHTML(){
   }
   if(d.sks.length)voll(d.halb?'12:00 – 13:00':'15:00 – 16:00',d.sks.map(function(m){return '<b>'+esc(m.name)+'</b>'}).join(' · ')+'<br><span style="color:#5c6660;font-size:8.5pt">Zum Mitmachen, parallel zur Auswahl</span>');
   if(d.ausklang)voll('im Anschluss','<div class="mod"><b>'+esc(d.ausklang.name)+'</b><span>'+d.ausklang.dauer+' Min</span></div>');
-  h+='</tbody></table>';
+  h+='</tbody></table></div>';
   var reco=recoInterest?recoById(recoInterest):null;
   if(reco)h+='<div class="preis"><b>Zusätzliches Interesse:</b> '+esc(reco.title)+'</div>';
   h+='<div class="preis">'+esc(PRICING.preis)+' '+esc(PRICING.foerderung)+'</div>';
@@ -1116,7 +1285,7 @@ document.addEventListener('keydown',function(e){
 });
 
 /* ═════════ BOOT: Shell in #gtk-root injizieren ═════════ */
-var SHELL="<div class=\"progress-bar\"><div class=\"progress-fill\" id=\"progressFill\"></div></div>\n<div class=\"step-indicator\" id=\"stepIndicator\"></div>\n<button class=\"back-btn\" id=\"backBtn\" onclick=\"goBack()\">\n  <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"19\" y1=\"12\" x2=\"5\" y2=\"12\"/><polyline points=\"12 19 5 12 12 5\"/></svg>\n  Zurück\n</button>\n<div class=\"logo\" id=\"logo\">Strong Partners</div>\n\n<!-- Warenkorb -->\n<button class=\"cart-widget\" id=\"cartWidget\" onclick=\"toggleCartPanel()\" aria-label=\"Dein Gesundheitstag-Paket\">\n  <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#006e1d\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z\"/></svg>\n  <span class=\"cart-label\">Dein Paket</span>\n  <span class=\"cart-count\" id=\"cartCount\">0</span>\n</button>\n<div class=\"cart-panel\" id=\"cartPanel\"></div>\n<button class=\"float-cta\" id=\"floatCta\" onclick=\"showForm()\">Unverbindlich anfragen\n  <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg>\n</button>\n\n<div class=\"viewport\" id=\"viewport\">\n\n  <!-- SLIDE 0: HERO -->\n  <div class=\"slide slide-hero active\" id=\"slide-0\">\n    <div class=\"hero-content\">\n      <p class=\"hero-overline\">Gesundheitstag-Konfigurator</p>\n      <h1 class=\"hero-h1\">Stell dir deinen <em>Gesundheitstag</em> zusammen.</h1>\n      <p class=\"hero-sub\">Jeder Gesundheitstag ist so individuell wie euer Unternehmen. Beantworte sieben kurze Fragen und wir stellen dir live die passenden Module zu eurem Tagesablauf zusammen.</p>\n      <button class=\"hero-cta\" onclick=\"startFunnel()\">\n        Los geht's\n        <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg>\n      </button>\n      <div class=\"hero-stats\">\n        <div><div class=\"stat-num\">35+</div><div class=\"stat-label\">Module zur Auswahl</div></div>\n        <div><div class=\"stat-num\" id=\"statSteps\">7</div><div class=\"stat-label\">Fragen bis zum Konzept</div></div>\n        <div><div class=\"stat-num\">1</div><div class=\"stat-label\">individueller Tagesplan</div></div>\n      </div>\n    </div>\n  </div>\n\n  <!-- SLIDES 1–7: FRAGEN (dynamisch) -->\n  <div class=\"slide slide-question\" id=\"slide-1\"><div class=\"q-inner\" id=\"qInner1\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-2\"><div class=\"q-inner\" id=\"qInner2\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-3\"><div class=\"q-inner\" id=\"qInner3\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-4\"><div class=\"q-inner\" id=\"qInner4\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-5\"><div class=\"q-inner\" id=\"qInner5\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-6\"><div class=\"q-inner\" id=\"qInner6\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-7\"><div class=\"q-inner\" id=\"qInner7\"></div></div>\n\n  <!-- SLIDE 8: ERGEBNIS -->\n  <div class=\"slide slide-result\" id=\"slide-8\"><div class=\"r-inner\" id=\"resultInner\"></div></div>\n\n  <!-- SLIDE 9: ANFRAGE -->\n  <div class=\"slide slide-form\" id=\"slide-9\"><div class=\"f-inner\" id=\"formInner\"></div></div>\n</div>";
+var SHELL="<div class=\"progress-bar\"><div class=\"progress-fill\" id=\"progressFill\"></div></div>\n<div class=\"step-indicator\" id=\"stepIndicator\"></div>\n<button class=\"back-btn\" id=\"backBtn\" onclick=\"goBack()\">\n  <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"19\" y1=\"12\" x2=\"5\" y2=\"12\"/><polyline points=\"12 19 5 12 12 5\"/></svg>\n  Zurück\n</button>\n\n<!-- Warenkorb -->\n<button class=\"cart-widget\" id=\"cartWidget\" onclick=\"toggleCartPanel()\" aria-label=\"Dein Gesundheitstag-Paket\">\n  <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#006e1d\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z\"/></svg>\n  <span class=\"cart-label\">Dein Paket</span>\n  <span class=\"cart-count\" id=\"cartCount\">0</span>\n</button>\n<div class=\"cart-panel\" id=\"cartPanel\"></div>\n<button class=\"float-cta\" id=\"floatCta\" onclick=\"showForm()\">Unverbindlich anfragen\n  <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg>\n</button>\n\n<div class=\"viewport\" id=\"viewport\">\n\n  <!-- SLIDE 0: HERO -->\n  <div class=\"slide slide-hero active\" id=\"slide-0\">\n    <div class=\"hero-content\">\n      <p class=\"hero-overline\">Gesundheitstag-Konfigurator</p>\n      <h1 class=\"hero-h1\">Stell dir deinen <em>Gesundheitstag</em> zusammen.</h1>\n      <p class=\"hero-sub\">Jeder Gesundheitstag ist so individuell wie euer Unternehmen. Beantworte sieben kurze Fragen und wir stellen dir live die passenden Module zu eurem Tagesablauf zusammen.</p>\n      <button class=\"hero-cta\" onclick=\"startFunnel()\">\n        Los geht's\n        <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg>\n      </button>\n      <div class=\"hero-stats\">\n        <div><div class=\"stat-num\">35+</div><div class=\"stat-label\">Module zur Auswahl</div></div>\n        <div><div class=\"stat-num\" id=\"statSteps\">7</div><div class=\"stat-label\">Fragen bis zum Konzept</div></div>\n        <div><div class=\"stat-num\">1</div><div class=\"stat-label\">individueller Tagesplan</div></div>\n      </div>\n    </div>\n  </div>\n\n  <!-- SLIDES 1–7: FRAGEN (dynamisch) -->\n  <div class=\"slide slide-question\" id=\"slide-1\"><div class=\"q-inner\" id=\"qInner1\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-2\"><div class=\"q-inner\" id=\"qInner2\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-3\"><div class=\"q-inner\" id=\"qInner3\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-4\"><div class=\"q-inner\" id=\"qInner4\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-5\"><div class=\"q-inner\" id=\"qInner5\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-6\"><div class=\"q-inner\" id=\"qInner6\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-7\"><div class=\"q-inner\" id=\"qInner7\"></div></div>\n\n  <!-- SLIDE 8: ERGEBNIS -->\n  <div class=\"slide slide-result\" id=\"slide-8\"><div class=\"r-inner\" id=\"resultInner\"></div></div>\n\n  <!-- SLIDE 9: ANFRAGE -->\n  <div class=\"slide slide-form\" id=\"slide-9\"><div class=\"f-inner\" id=\"formInner\"></div></div>\n</div>";
 function boot(){
   var root=document.getElementById('gtk-root');
   if(!root||root.getAttribute('data-gtk-ready'))return;
