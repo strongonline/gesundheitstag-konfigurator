@@ -759,18 +759,37 @@ function removeModule(id){
   });
   showResults();
 }
+/* Wohin gehört ein Modul im Tagesablauf?
+   Entscheidend ist der TYP, nicht die einzelne ID. Vorher waren nur
+   kn_stark/kn_online als Auftakt und kn_ernaehrung als Mittagsimpuls
+   verdrahtet – alle übrigen Keynotes landeten dadurch als parallele
+   Station im Zeitraster, obwohl der Auftakt-Platz frei war (Fehler 24.07.).
+   p ist der Plan-Zustand (oder ein Zwischenstand beim Packen). */
+function slotForModule(m,p){
+  if(m.typ==='schnupperkurs')return 'sks';
+  if(m.typ==='baustein')return 'ausklang';
+  if(m.typ==='keynote'){
+    var mittagFrei=!p.halb&&!p.mittag;
+    /* Die Ernährungs-Keynote ist als Impuls vor der Pause konzipiert */
+    if(m.id==='kn_ernaehrung')return mittagFrei?'mittag':(!p.opener?'opener':'station');
+    if(!p.opener)return 'opener';
+    if(mittagFrei)return 'mittag';
+    return 'station';
+  }
+  return 'station';
+}
 function addModule(id){
   if(!plan||planIds().indexOf(id)>=0)return;
   var m=byId(id);if(!m)return;
   pushState();
   var placed=true;
-  if(id==='kn_stark'||id==='kn_online'){
-    if(!plan.opener)plan.opener=id;else placed=placeStation(m);
-  }else if(id==='kn_ernaehrung'&&!plan.halb){
-    if(!plan.mittag)plan.mittag=id;else placed=placeStation(m);
-  }else if(m.typ==='schnupperkurs'){plan.sks.push(id)}
-  else if(m.typ==='baustein'){plan.ausklang=id}
-  else placed=placeStation(m);
+  switch(slotForModule(m,plan)){
+    case 'opener':   plan.opener=id; break;
+    case 'mittag':   plan.mittag=id; break;
+    case 'sks':      plan.sks.push(id); break;
+    case 'ausklang': plan.ausklang=id; break;
+    default:         placed=placeStation(m);
+  }
   if(!placed){
     planHistory.pop();
     addFailMsg='Für \u201e'+m.name+'\u201c ist gerade kein Slot frei \u2013 entferne ein Modul oder eine Spalte, dann klappt es.';
@@ -895,13 +914,16 @@ function xBtn(id){return '<button class="cell-x" title="Aus dem Plan entfernen" 
 /* Empfehlungs-Auswahl einmalig in einen festen Plan packen */
 function packPlan(ids){
   var opener=null,mittag=null,stations=[],sks=[],ausklang=null;
+  var halbtag=answers.duration==='halb';
   ids.forEach(function(id){
     var m=byId(id);if(!m)return;
-    if(id==='kn_stark'||id==='kn_online'){if(!opener)opener=id;else stations.push(m)}
-    else if(id==='kn_ernaehrung')mittag=id;
-    else if(m.typ==='schnupperkurs')sks.push(id);
-    else if(m.typ==='baustein')ausklang=id;
-    else stations.push(m);
+    switch(slotForModule(m,{opener:opener,mittag:mittag,halb:halbtag})){
+      case 'opener':   opener=id; break;
+      case 'mittag':   mittag=id; break;
+      case 'sks':      sks.push(id); break;
+      case 'ausklang': ausklang=id; break;
+      default:         stations.push(m);
+    }
   });
   var slots=slotCount();
   var maxT=RULES.maxTracks[answers.size||'m']||4;
