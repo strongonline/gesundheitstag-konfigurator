@@ -1007,7 +1007,7 @@ function buildPlanHTML(){
   var h='';
   function fullRow(time,contentHTML,note,removeId){
     h+='<div class="plan-row"><div class="plan-time">'+time+'</div>';
-    h+='<div class="plan-cells" style="grid-template-columns:1fr"><div class="plan-cell full'+(removeId?' has-x':'')+'">';
+    h+='<div class="plan-cells full-row" style="grid-template-columns:1fr"><div class="plan-cell full'+(removeId?' has-x':'')+'">';
     if(removeId)h+=xBtn(removeId);
     h+=contentHTML;
     if(note)h+='<span class="cell-note">'+esc(note)+'</span>';
@@ -1016,7 +1016,7 @@ function buildPlanHTML(){
   /* Freier Platz in einer Vollzeile: bleibt sichtbar und ist direkt neu befüllbar */
   function fullSlot(time,label,kat){
     h+='<div class="plan-row"><div class="plan-time">'+time+'</div>';
-    h+='<div class="plan-cells" style="grid-template-columns:1fr"><div class="plan-cell full empty">';
+    h+='<div class="plan-cells full-row" style="grid-template-columns:1fr"><div class="plan-cell full empty">';
     h+='<button class="cell-add" onclick="openPoolKat(\''+escAttr(kat)+'\')">+ '+esc(label)+'</button>';
     h+='</div></div></div>';
   }
@@ -1038,7 +1038,11 @@ function buildPlanHTML(){
       if(d.mittag)fullRow('12:00 – 12:30',esc(d.mittag.name),'Impuls vor der Pause',d.mittag.id);
       fullRow(d.mittag?'12:30 – 13:00':'12:00 – 13:00','Mittagspause');
     }
-    h+='<div class="plan-row"><div class="plan-time">'+slotTimes[s]+(s===0?'<span class="cell-note" style="display:block;font-weight:400">+ 15 Min für eure Fragen</span>':'')+'</div>';
+    var parallel=0;
+    d.tracks.forEach(function(t){var e=t.grid?t.grid[s]:null;if(e&&!e.cont)parallel++});
+    h+='<div class="plan-row"><div class="plan-time">'+slotTimes[s]+(s===0?'<span class="cell-note" style="display:block;font-weight:400">+ 15 Min für eure Fragen</span>':'');
+    if(parallel>1)h+='<span class="plan-parallel">'+parallel+' Module parallel</span>';
+    h+='</div>';
     h+='<div class="plan-cells" style="'+colStyle+'">';
     d.tracks.forEach(function(t,ti){h+=planCellHTML(t.grid?t.grid[s]:null,t.feld,ti,s,d.slots)});
     h+='</div></div>';
@@ -1052,7 +1056,7 @@ function buildPlanHTML(){
   }else fullSlot(skTime,'Schnupperkurs wählen (optional)','Schnupperkurse & Abschluss');
   if(d.ausklang)fullRow('im Anschluss',esc(d.ausklang.name),d.ausklang.dauer+' Min',d.ausklang.id);
   else fullSlot('im Anschluss','Tagesausklang wählen (optional)','Schnupperkurse & Abschluss');
-  return '<div class="plan-tbl">'+h+'</div>';
+  return '<div class="plan-tbl tracks-'+d.tracks.length+'">'+h+'</div>';
 }
 function planHintText(){
   var d=buildPlanData();
