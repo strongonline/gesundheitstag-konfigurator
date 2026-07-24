@@ -4,9 +4,22 @@
    mit den Site-Styles. Ehemals fixe Elemente sind absolut im Root
    positioniert (Root = 100dvh-Bühne).
    ═══════════════════════════════════════════════════════════════ */
-/* Keine eigenen @font-face-Regeln und keine externen Font-Calls (DSGVO).
-   Cera Pro liefert die Webflow-Seite (dort als Custom Font hochgeladen),
-   ohne Cera Pro greift die System-Schrift. */#gtk-root{
+/* Cera Pro unter EINEM Familiennamen registrieren.
+   Hintergrund: Webflow liefert die Schnitte als drei getrennte Familien aus
+   ("Cera Pro 700 - LOKAL" usw.), unter denen sich Normal und Fett nicht sauber
+   ansteuern lassen. Hier zeigen wir auf exakt dieselben Dateien, die die
+   Webflow-Seite ohnehin schon lädt – kein zusätzlicher Download, kein externer
+   Dienst, keine Google-Calls (DSGVO). Regular (400) ist bei Webflow nicht
+   hinterlegt, deshalb deckt die Medium-Datei den Bereich 400–500 ab.
+   Fehlt die Datei einmal, greift die System-Schrift aus der Kette unten. */@font-face{
+  font-family:'Cera Pro';
+  src:url('https://cdn.prod.website-files.com/69970053c4693c62ff0f6079/699726af9820bfade02dacea_Cera%20Pro%20Medium.otf') format('opentype');
+  font-weight:400 500; font-style:normal; font-display:swap;
+}@font-face{
+  font-family:'Cera Pro';
+  src:url('https://cdn.prod.website-files.com/69970053c4693c62ff0f6079/699726affb7366fc509544de_Cera%20Pro%20Bold.otf') format('opentype');
+  font-weight:600 700; font-style:normal; font-display:swap;
+}#gtk-root{
   --surface:#fbf9f7; --surface-low:#f5f3f1; --surface-high:#e9e7e5;
   --surface-highest:#e3e1df; --white:#ffffff;
   --primary:#006e1d; --primary-container:#38ba47;
