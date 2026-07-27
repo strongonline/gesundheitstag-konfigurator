@@ -474,8 +474,13 @@ function goBack(){
   prev.classList.remove('active');
   currentSlide=target;
   document.getElementById('slide-'+target).classList.add('active');
-  resultCelebrated=false;
-  plan=null;planHistory=[];planFuture=[];lastAddedId=null;addFailMsg=null;
+  /* Plan nur verwerfen, wenn wirklich in den Funnel zurückgegangen wird.
+     Beim Schritt Formular -> Ergebnis muss die Konfiguration erhalten bleiben,
+     sonst zeigt das Formular danach "0 Module" (Fehler 27.07.). */
+  if(target<RESULT_SLIDE){
+    resultCelebrated=false;
+    plan=null;planHistory=[];planFuture=[];lastAddedId=null;addFailMsg=null;
+  }
   refreshCart(false);
   updateChrome();
   focusIdx=-1;
