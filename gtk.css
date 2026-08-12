@@ -147,6 +147,18 @@
     pointer-events:none}/* Antwortkacheln: zweispaltig und durchgehend zentriert */#gtk-root .q-grid{grid-template-columns:1fr 1fr;gap:.5rem}#gtk-root .q-card{padding:.9rem .75rem;border-radius:.85rem;text-align:center}#gtk-root .q-card-head{flex-direction:column;align-items:center;gap:.45rem;margin-bottom:.35rem}#gtk-root .q-icon{width:30px;height:30px;border-radius:8px}#gtk-root .q-icon svg{width:16px;height:16px}#gtk-root .q-card-title{font-size:.86rem;line-height:1.25;text-align:center}#gtk-root .q-card-desc{font-size:.78rem;line-height:1.4;text-align:center}#gtk-root .q-title{font-size:1.35rem}#gtk-root .q-hint{font-size:.85rem;margin-bottom:1.1rem}
 }
 
+/* ── MODUL-INFO & TOOLTIP (Feedback: Info-Entdeckbarkeit + Keynote-Kontext) ── */
+#gtk-root .cell-info{position:absolute;bottom:.28rem;left:.5rem;width:18px;height:18px;padding:0;border:none;
+  background:none;color:var(--on-surface-variant);opacity:.5;cursor:pointer;display:inline-flex;align-items:center;
+  justify-content:center;transition:opacity .15s,color .15s;-webkit-tap-highlight-color:transparent}
+#gtk-root .cell-info svg{width:15px;height:15px}
+#gtk-root .cell-info:hover,#gtk-root .cell-info:focus-visible{opacity:1;color:var(--primary);outline:none}
+#gtk-root .plan-cell.full .cell-info{color:var(--primary);opacity:.62}
+#gtk-root .gtk-tip{position:fixed;left:0;top:0;z-index:500;max-width:260px;background:var(--on-surface);color:#fff;
+  font-size:.75rem;line-height:1.45;padding:.55rem .7rem;border-radius:.55rem;box-shadow:0 10px 30px rgba(0,0,0,.24);
+  visibility:hidden;opacity:0;transition:opacity .14s;pointer-events:none}
+#gtk-root .gtk-tip.show{visibility:visible;opacity:1}
+
 /* ── BASIS-SIZING (bewusst am Dateiende: die aus html/body transformierten
    #gtk-root-Regeln enthalten height:100%, das in einem Embed-Kontext zu 0
    kollabiert – diese Regel muss sie in der Kaskade überschreiben) ── */

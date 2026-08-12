@@ -87,7 +87,8 @@ var ICONS={
  mappin:'<path d="M12 21.5s-7-6-7-11.3A7 7 0 0 1 19 10.2c0 5.3-7 11.3-7 11.3z"/><circle cx="12" cy="10" r="2.6"/>',
  globe:'<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5a13.5 13.5 0 0 1 0 17"/><path d="M12 3.5a13.5 13.5 0 0 0 0 17"/>',
  play:'<circle cx="12" cy="12" r="8.5"/><path d="M10.2 8.8l5 3.2-5 3.2z"/>',
- venus:'<circle cx="12" cy="9" r="5.2"/><path d="M12 14.2V21M8.5 18h7"/>'
+ venus:'<circle cx="12" cy="9" r="5.2"/><path d="M12 14.2V21M8.5 18h7"/>',
+ info:'<circle cx="12" cy="12" r="8.5"/><path d="M12 11.2v4.8"/><path d="M12 7.4v.2"/>'
 };
 function icon(name){
   return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||ICONS.star)+'</svg>';
@@ -165,15 +166,15 @@ var MODULES=[
  {id:'kn_online',name:'Online-Keynote (digitales Format)',typ:'keynote',kat:'Keynotes & Impulse',themen:['bewegung','mental','ernaehrung','schlaf','digital'],fit:['remote'],dauer:45,only:'remote',
   desc:'Digitaler Impulsvortrag zu eurem Wunschthema, ideal für Remote- und Hybrid-Teams an verteilten Standorten.'},
  {id:'kn_mobil',name:'Mobil, aufrecht und schmerzfrei durch den Arbeitsalltag',typ:'keynote',kat:'Keynotes & Impulse',themen:['bewegung'],fit:[],dauer:45,
-  desc:'[ENTWURF] Beweglich und aufrecht durch den Arbeitstag: wie Haltung, Mobilität und kleine Bewegungsroutinen Verspannungen und Schmerzen vorbeugen – mit einfachen Impulsen für Büro und unterwegs.'},
+  entwurf:true,desc:'Beweglich und aufrecht durch den Arbeitstag: wie Haltung, Mobilität und kleine Bewegungsroutinen Verspannungen und Schmerzen vorbeugen – mit einfachen Impulsen für Büro und unterwegs.'},
  {id:'kn_anatomie',name:'Anatomie Basics: Was unser Körper wirklich kann',typ:'keynote',kat:'Keynotes & Impulse',themen:['bewegung'],fit:[],dauer:45,
   desc:'Eine interaktive Reise durch den eigenen Körper: Faszien, Wirbelsäule, Hüfte und Muskelketten verständlich erklärt – mit kleinen Mitmachimpulsen für alle, die ihren Körper besser verstehen und im Alltag gesünder nutzen wollen.'},
  {id:'kn_stayactive',name:'Stay Active Impuls: Aktive Pause',typ:'keynote',kat:'Keynotes & Impulse',themen:['bewegung'],fit:[],dauer:45,
   desc:'Rücken, Kopf, Müdigkeit? Schon ein paar Minuten Bewegung am Tag helfen. Einfache Routinen ohne Equipment und ohne viel Zeit, die Spaß machen und sich sofort umsetzen lassen.'},
  {id:'kn_homeoffice',name:'Benefit & Challenge - Herausforderungen im Home Office',typ:'keynote',kat:'Keynotes & Impulse',themen:['bewegung','mental'],fit:['remote'],dauer:45,only:'remote',
-  desc:'[ENTWURF] Home Office bringt Freiheit und Tücken zugleich: Bewegungsmangel, Abgrenzung, Ergonomie. Wie sich die Vorteile nutzen und die typischen Fallen im hybriden Alltag vermeiden lassen.'},
+  entwurf:true,desc:'Home Office bringt Freiheit und Tücken zugleich: Bewegungsmangel, Abgrenzung, Ergonomie. Wie sich die Vorteile nutzen und die typischen Fallen im hybriden Alltag vermeiden lassen.'},
  {id:'kn_azubi_stark',name:'Stark durch den Ausbildungsalltag: Mit Power ins Berufsleben!',typ:'keynote',kat:'Keynotes & Impulse',themen:['bewegung','mental','ernaehrung'],fit:['azubis'],dauer:45,only:'azubis',
-  desc:'[ENTWURF] Fit und motiviert durch die Ausbildung: Bewegung, Ernährung und mentale Stärke als Basis für einen guten Start ins Berufsleben – aktiv und nah an der jungen Zielgruppe.'},
+  entwurf:true,desc:'Fit und motiviert durch die Ausbildung: Bewegung, Ernährung und mentale Stärke als Basis für einen guten Start ins Berufsleben – aktiv und nah an der jungen Zielgruppe.'},
  /* — Stationen & Aktiv-Einheiten — */
  {id:'st_ergonomie',name:'Ergonomie am Arbeitsplatz',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung'],fit:['remote','alle'],dauer:45,
   desc:'Ein ergonomisches Büro ist nur ergonomisch, wenn man es richtig nutzt. Tricks für Rücken, Nacken und Hüfte, im Office und im Home-Office.'},
@@ -186,32 +187,32 @@ var MODULES=[
  {id:'st_hiit',name:'HIIT für die Herzaktivierung',typ:'aktiv',kat:'Bewegung & Ergonomie',themen:['herz','bewegung'],fit:['azubis'],dauer:45,
   desc:'Grundlagen des hochintensiven Intervalltrainings und passende Übungen. Sportkleidung von Vorteil.'},
  {id:'st_ergo_industrie',name:'Ergonomie in der Industrie',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung'],fit:['gewerblich'],dauer:45,only:'gewerblich',
-  desc:'[ENTWURF] Ergonomie für körperlich fordernde und schichtbetriebene Arbeitsplätze: rückenschonendes Heben, Haltung an der Maschine und Ausgleichsübungen gegen einseitige Belastung.'},
+  entwurf:true,desc:'Ergonomie für körperlich fordernde und schichtbetriebene Arbeitsplätze: rückenschonendes Heben, Haltung an der Maschine und Ausgleichsübungen gegen einseitige Belastung.'},
  {id:'st_faszien_ball',name:'Faszienorientiertes Training mit dem Tennisball',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung'],fit:[],dauer:45,
-  desc:'[ENTWURF] Faszien lösen mit einfachstem Equipment: mit dem Tennisball Verklebungen und Verspannungen selbst bearbeiten – eine Technik zum sofortigen Mitnehmen in den Alltag.'},
+  entwurf:true,desc:'Faszien lösen mit einfachstem Equipment: mit dem Tennisball Verklebungen und Verspannungen selbst bearbeiten – eine Technik zum sofortigen Mitnehmen in den Alltag.'},
  {id:'st_mythen',name:'Lüge oder Wahrheit - Fitness & Ernährungsmythen auf der Spur',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung','ernaehrung'],fit:['azubis','alle'],dauer:45,
-  desc:'[ENTWURF] Detox-Tees, Sixpack über Nacht, „no pain no gain"? Im interaktiven Quiz nehmen wir gängige Fitness- und Ernährungsmythen auseinander und trennen Fakten von Halbwissen.'},
+  entwurf:true,desc:'Detox-Tees, Sixpack über Nacht, „no pain no gain"? Im interaktiven Quiz nehmen wir gängige Fitness- und Ernährungsmythen auseinander und trennen Fakten von Halbwissen.'},
  {id:'st_energybike',name:'Bewegung, Ernährung & Klimaschutz – aktiv mit dem Energy Bike',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung','ernaehrung'],fit:['alle','azubis'],dauer:45,
   desc:'Bewegung, klimafreundliche Ernährung und Spaß vereint: am Energy Bike wird der Smoothie selbst erstrampelt. Rund ums Mixen geht es um saisonale Zutaten, CO₂-Fußabdruck und Nachhaltigkeit zum Anfassen. Nutzt dasselbe Gerät wie das Smoothie Bike.'},
  {id:'st_kraft',name:'Krafttraining für mehr Beweglichkeit: stark, stabil, flexibel',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung'],fit:[],dauer:45,
-  desc:'[ENTWURF] Kraft und Beweglichkeit gehören zusammen: funktionelle Übungen, die stark, stabil und flexibel machen – für einen belastbaren Körper im Alltag.'},
+  entwurf:true,desc:'Kraft und Beweglichkeit gehören zusammen: funktionelle Übungen, die stark, stabil und flexibel machen – für einen belastbaren Körper im Alltag.'},
  {id:'st_ruecken_bs',name:'Rücken im Gleichgewicht: Verstehen, Vorbeugen und Bewegen bei Bandscheibenvorfällen',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung'],fit:[],dauer:45,
-  desc:'[ENTWURF] Verstehen, vorbeugen, bewegen: wie die Wirbelsäule funktioniert, was bei Bandscheibenbeschwerden hilft und welche Übungen den Rücken sicher stärken.'},
+  entwurf:true,desc:'Verstehen, vorbeugen, bewegen: wie die Wirbelsäule funktioniert, was bei Bandscheibenbeschwerden hilft und welche Übungen den Rücken sicher stärken.'},
  {id:'st_sos_ruecken',name:'SOS Übungen bei Rückenschmerzen & Bürotaugliche Dehnungen',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung'],fit:[],dauer:45,
-  desc:'[ENTWURF] Erste Hilfe bei akuten Rückenschmerzen plus bürotaugliche Dehnungen, die sich zwischendurch am Arbeitsplatz umsetzen lassen – für schnelle Entlastung.'},
+  entwurf:true,desc:'Erste Hilfe bei akuten Rückenschmerzen plus bürotaugliche Dehnungen, die sich zwischendurch am Arbeitsplatz umsetzen lassen – für schnelle Entlastung.'},
  {id:'st_augen',name:'Augengesundheit am Bildschirm – entspannt sehen trotz digitalem Alltag',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung','digital'],fit:['remote'],dauer:45,
-  desc:'[ENTWURF] Trockene, müde Augen nach dem Bildschirmtag? Einfache Übungen und Routinen, die die Augen entspannen und entlasten – für angenehmes Sehen trotz digitalem Alltag.'},
+  entwurf:true,desc:'Trockene, müde Augen nach dem Bildschirmtag? Einfache Übungen und Routinen, die die Augen entspannen und entlasten – für angenehmes Sehen trotz digitalem Alltag.'},
  {id:'st_feuerwehr',name:'Training & Leistungsfähigkeit im Feuerwehrdienst',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung'],fit:['gewerblich'],dauer:45,poolOnly:true,
-  desc:'[ENTWURF] Zielgerichtetes Training für die besonderen körperlichen Anforderungen im Feuerwehrdienst: Kraft, Ausdauer und Belastbarkeit für den Einsatz. Branchenspezifisches Modul.'},
+  entwurf:true,desc:'Zielgerichtetes Training für die besonderen körperlichen Anforderungen im Feuerwehrdienst: Kraft, Ausdauer und Belastbarkeit für den Einsatz. Branchenspezifisches Modul.'},
  {id:'st_wechsel_bewegung',name:'Körper im Wandel: Bewegung in den Wechseljahren gezielt nutzen',typ:'station',kat:'Bewegung & Ergonomie',themen:['bewegung','frauen'],fit:[],dauer:45,only:'frauen',
-  desc:'[ENTWURF] Der Körper verändert sich in den Wechseljahren – Bewegung hilft gezielt gegen typische Beschwerden. Welches Training Knochen, Muskeln und Wohlbefinden in dieser Phase unterstützt.'},
+  entwurf:true,desc:'Der Körper verändert sich in den Wechseljahren – Bewegung hilft gezielt gegen typische Beschwerden. Welches Training Knochen, Muskeln und Wohlbefinden in dieser Phase unterstützt.'},
  /* — Schnupperkurse — */
  {id:'sk_functional',name:'Schnupperkurs Functional Fitness',typ:'schnupperkurs',kat:'Schnupperkurse & Abschluss',themen:['bewegung','herz'],fit:['azubis'],dauer:60,
   desc:'Energiegeladener Abschluss zum Mitmachen: funktionelles Ganzkörpertraining mit unseren Coaches.'},
  {id:'sk_mobility',name:'Schnupperkurs Mobility & Stretching',typ:'schnupperkurs',kat:'Schnupperkurse & Abschluss',themen:['bewegung'],fit:['gewerblich'],dauer:60,
   desc:'Beweglichkeit verbessern, Verspannungen lösen: der sanfte, aktive Tagesabschluss.'},
  {id:'sk_ruecken',name:'Schnupperkurs Rücken-Fit',typ:'schnupperkurs',kat:'Schnupperkurse & Abschluss',themen:['bewegung'],fit:['gewerblich','alle'],dauer:60,
-  desc:'[ENTWURF] Ein aktiver Abschluss rund um den Rücken: Kräftigung, Mobilisation und Entlastung – angeleitet von unseren Coaches, für jedes Level.'},
+  entwurf:true,desc:'Ein aktiver Abschluss rund um den Rücken: Kräftigung, Mobilisation und Entlastung – angeleitet von unseren Coaches, für jedes Level.'},
 
  /* ═══════════ Spalte MENTAL & SOZIALE GESUNDHEIT (33) ═══════════ */
  /* — Keynotes — */
@@ -228,7 +229,7 @@ var MODULES=[
  {id:'kn_levelup',name:'Level Up! Selbstbewusstsein für die Zielgerade',typ:'keynote',kat:'Keynotes & Impulse',themen:['mental'],fit:['azubis'],dauer:45,only:'azubis',
   desc:'Rückenwind für die Zielgerade der Ausbildung. „Ich bin ja nur Azubi!" gilt nicht mehr – dieser Impuls macht Mut, die eigene Entwicklung klar zu sehen und selbstbewusst in den Berufseinstieg zu starten.'},
  {id:'kn_ownday',name:'Own Your Day! Zeit- & Selbstmanagement im Ausbildungsalltag',typ:'keynote',kat:'Keynotes & Impulse',themen:['mental'],fit:['azubis'],dauer:45,only:'azubis',
-  desc:'[ENTWURF] Zeit- und Selbstmanagement im Ausbildungsalltag: Prioritäten setzen, den Tag strukturieren und Aufgaben souverän steuern – für mehr Überblick und weniger Stress.'},
+  entwurf:true,desc:'Zeit- und Selbstmanagement im Ausbildungsalltag: Prioritäten setzen, den Tag strukturieren und Aufgaben souverän steuern – für mehr Überblick und weniger Stress.'},
  {id:'kn_zyklus',name:'Frauengesundheit & Zykluswissen: Den natürlichen Rhythmus nutzen',typ:'keynote',kat:'Keynotes & Impulse',themen:['mental','frauen'],fit:[],dauer:45,only:'frauen',
   desc:'Der weibliche Zyklus beeinflusst Energie, Konzentration und Stimmung stärker, als vielen bewusst ist. Ein alltagsnaher Blick auf die Zyklusphasen und wie sich ihr natürlicher Rhythmus bewusst als Ressource nutzen lässt.'},
  /* — Stationen & Aktiv-Einheiten — */
@@ -255,9 +256,9 @@ var MODULES=[
  {id:'st_regeneration',name:'Regeneration & Erholung',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['schlaf','mental'],fit:[],dauer:45,
   desc:'Unser Akku braucht regelmäßig neue Energie. Wir reflektieren individuelle Tagesabläufe und entwickeln Strategien, um nach vollen Tagen wieder in eine gesunde Balance zu finden – für mehr Fokus und Erholung.'},
  {id:'st_digitaldetox',name:'Digital Detox & Healthy Habits',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['digital','mental'],fit:[],dauer:45,
-  desc:'[ENTWURF] Ständige Erreichbarkeit und Dauer-Scrollen kosten Energie. Wie bewusste digitale Routinen und kleine Healthy Habits helfen, den Kopf frei und die Aufmerksamkeit gesund zu halten.'},
+  entwurf:true,desc:'Ständige Erreichbarkeit und Dauer-Scrollen kosten Energie. Wie bewusste digitale Routinen und kleine Healthy Habits helfen, den Kopf frei und die Aufmerksamkeit gesund zu halten.'},
  {id:'st_multitasking',name:'Multitasking, Erschöpfung & Fokus',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['digital','mental'],fit:['remote'],dauer:45,only:'remote',
-  desc:'[ENTWURF] Multitasking ist ein Mythos, der erschöpft. Wie sich Aufmerksamkeit bündeln, Fokuszeiten schaffen und digitale Ablenkung reduzieren lässt – für konzentriertes Arbeiten.'},
+  entwurf:true,desc:'Multitasking ist ein Mythos, der erschöpft. Wie sich Aufmerksamkeit bündeln, Fokuszeiten schaffen und digitale Ablenkung reduzieren lässt – für konzentriertes Arbeiten.'},
  {id:'st_underpressure',name:'Under Pressure - Entscheidungsfindung unter Stress',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['mental','team'],fit:['fk'],dauer:45,only:'fk',
   desc:'Handlungssicher bleiben in Stress- und Ausnahmesituationen: Leitsätze aus dem Crew-Ressource-Management, der Faktor Mensch und Case-Studies in Kleingruppen – Tipps aus der Praxis für die Praxis.'},
  {id:'st_failforward',name:'Fail Forward - Resilienz als Erfolgsfaktor für Studium & Beruf',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['mental','team'],fit:['azubis'],dauer:45,only:'azubis',
@@ -267,13 +268,13 @@ var MODULES=[
  {id:'st_nextchapter',name:'Next Chapter! Mut & Stärke für den nächsten Schritt',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['mental','team'],fit:['azubis'],dauer:45,only:'azubis',
   desc:'Der Übergang von der Ausbildung ins Team bringt neue Rollen und Verantwortung. Tools & Techniken für Vorstellungsgespräche und gezielt gestärkte Entscheidungskompetenz – für einen starken nächsten Schritt.'},
  {id:'st_wechsel_mental',name:'Frauengesundheit & Wechseljahre: Den eigenen Körper besser verstehen',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['mental','frauen'],fit:[],dauer:45,only:'frauen',
-  desc:'[ENTWURF] Die Wechseljahre bringen körperliche und emotionale Veränderungen. Verständliches Grundwissen zu hormonellen Prozessen und Impulse, um diese Phase bewusst und gelassen zu gestalten.'},
+  entwurf:true,desc:'Die Wechseljahre bringen körperliche und emotionale Veränderungen. Verständliches Grundwissen zu hormonellen Prozessen und Impulse, um diese Phase bewusst und gelassen zu gestalten.'},
  {id:'st_menopause',name:'Menopause im Arbeitsalltag: verstehen, sensibilisieren & begleiten',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['mental','frauen'],fit:[],dauer:45,only:'frauen',
-  desc:'[ENTWURF] Menopause sichtbar und besprechbar machen: wie Teams und Führungskräfte für das Thema sensibilisiert und betroffene Kolleginnen im Arbeitsalltag gut begleitet werden. Auch für gemischte Gruppen geeignet.'},
+  entwurf:true,desc:'Menopause sichtbar und besprechbar machen: wie Teams und Führungskräfte für das Thema sensibilisiert und betroffene Kolleginnen im Arbeitsalltag gut begleitet werden. Auch für gemischte Gruppen geeignet.'},
  {id:'st_selbstbewusst_frau',name:'Selbstbewusstsein als Frau: Die eigene innere Stärke entdecken',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['mental','frauen'],fit:[],dauer:45,only:'frauen',
   desc:'Selbstbewusstsein darf wachsen. Ein geschützter Raum, um innere Zweifel zu erkennen und ihnen mit Klarheit und Selbstvertrauen zu begegnen – für mehr innere Stabilität und ein sicheres Auftreten. Rahmen bitte gemeinsam abstimmen.'},
  {id:'st_wechsel_schlaf',name:'Wechseljahre & Schlaf: Warum er sich verändert & was hilft',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['schlaf','frauen'],fit:[],dauer:45,only:'frauen',
-  desc:'[ENTWURF] Warum sich der Schlaf in den Wechseljahren verändert und was wirklich hilft: hormonelle Zusammenhänge verständlich erklärt, mit konkreten Strategien für erholsame Nächte.'},
+  entwurf:true,desc:'Warum sich der Schlaf in den Wechseljahren verändert und was wirklich hilft: hormonelle Zusammenhänge verständlich erklärt, mit konkreten Strategien für erholsame Nächte.'},
  {id:'st_gender_med',name:'Gender Medicine: Warum Gesundheit nicht für alle gleich funktioniert',typ:'station',kat:'Mentale Gesundheit & Regeneration',themen:['mental','frauen'],fit:[],dauer:45,only:'frauen',
   desc:'Herzinfarkte, Medikamente, Symptome – Gesundheit funktioniert nicht für alle gleich. Ein verständlicher Blick auf geschlechtersensible Prävention, mit vielen Aha-Effekten für informierte Entscheidungen.'},
  /* — Schnupperkurse & Abschluss — */
@@ -306,21 +307,21 @@ var MODULES=[
  {id:'st_bowl',name:'Ernährungsbasics & How to Bowl',typ:'station',kat:'Ernährung',themen:['ernaehrung'],fit:['alle'],dauer:45,
   desc:'Start mit einem Quiz, dann die Basics gesunder Ernährung – und direkt angewendet an der „How to Bowl"-Station: frische, saisonale Zutaten am Buffet, zusammengestellt mit unserer Oecotrophologin.'},
  {id:'st_trends',name:'Ernährungstrends unter der Lupe',typ:'station',kat:'Ernährung',themen:['ernaehrung'],fit:[],dauer:45,
-  desc:'[ENTWURF] Intervallfasten, Superfoods, Low Carb & Co.: wir ordnen aktuelle Ernährungstrends wissenschaftlich ein und schauen, was im Alltag wirklich trägt und was nur Hype ist.'},
+  entwurf:true,desc:'Intervallfasten, Superfoods, Low Carb & Co.: wir ordnen aktuelle Ernährungstrends wissenschaftlich ein und schauen, was im Alltag wirklich trägt und was nur Hype ist.'},
  {id:'st_gewicht',name:'Gewichtsreduktion & Gewichtskontrolle: Die Basics verstehen',typ:'station',kat:'Ernährung',themen:['ernaehrung'],fit:[],dauer:45,
-  desc:'[ENTWURF] Die Basics eines gesunden Gewichts verstehen: Energiebilanz, Sättigung und realistische Gewohnheiten – ohne Crash-Diät, dafür alltagstauglich und nachhaltig.'},
+  entwurf:true,desc:'Die Basics eines gesunden Gewichts verstehen: Energiebilanz, Sättigung und realistische Gewohnheiten – ohne Crash-Diät, dafür alltagstauglich und nachhaltig.'},
  {id:'st_diabetes',name:'Diabetes: verstehen, vorbeugen & Zuckerfallen erkennen',typ:'station',kat:'Ernährung',themen:['ernaehrung'],fit:[],dauer:45,
-  desc:'[ENTWURF] Diabetes verstehen und vorbeugen: wie Blutzucker funktioniert, wo versteckte Zuckerfallen lauern und welche Ernährungs- und Bewegungsgewohnheiten das Risiko senken.'},
+  entwurf:true,desc:'Diabetes verstehen und vorbeugen: wie Blutzucker funktioniert, wo versteckte Zuckerfallen lauern und welche Ernährungs- und Bewegungsgewohnheiten das Risiko senken.'},
  {id:'st_moodfood',name:'Mood Food: Essen, das gute Laune macht',typ:'station',kat:'Ernährung',themen:['ernaehrung','mental'],fit:[],dauer:45,
   desc:'Essen wirkt auf die Stimmung: wie Nährstoffe wie Tryptophan, Omega-3 und B-Vitamine die Bildung von Glückshormonen fördern. Mit Snackplaner, Rezeptideen und Impulsen für die mentale Balance – ganz ohne Diätdenken.'},
  {id:'st_mealprep',name:'Mealprep: Gut vorbereitet durch die Woche',typ:'station',kat:'Ernährung',themen:['ernaehrung'],fit:[],dauer:45,
-  desc:'[ENTWURF] Gut vorbereitet durch die Woche: wie sich mit cleverem Vorkochen und Lagern gesunde Mahlzeiten planen lassen – spart Zeit, Geld und den täglichen „Was koche ich?"-Stress.'},
+  entwurf:true,desc:'Gut vorbereitet durch die Woche: wie sich mit cleverem Vorkochen und Lagern gesunde Mahlzeiten planen lassen – spart Zeit, Geld und den täglichen „Was koche ich?"-Stress.'},
  {id:'st_energydrinks',name:'Energy Boost oder Risiko: Energydrinks & Vapes im Alltag',typ:'station',kat:'Ernährung',themen:['ernaehrung'],fit:['azubis'],dauer:45,only:'azubis',
   desc:'Was passiert im Körper bei Energydrinks und Vapes? Ein ehrlicher Blick auf Wirkung, Schlaf und Konzentration – und alltagstaugliche Wege zu echter, nachhaltiger Energie. Ohne Verbote.'},
  {id:'st_essen_tour',name:'Essen on Tour: Gesunde Ernährung für den mobilen Alltag',typ:'station',kat:'Ernährung',themen:['ernaehrung'],fit:['gewerblich'],dauer:45,only:'gewerblich',
-  desc:'[ENTWURF] Gesunde Ernährung unterwegs und im Schichtbetrieb: praktische Lösungen für Mahlzeiten ohne feste Küche – was in die Tasche passt und trotzdem Energie liefert.'},
+  entwurf:true,desc:'Gesunde Ernährung unterwegs und im Schichtbetrieb: praktische Lösungen für Mahlzeiten ohne feste Küche – was in die Tasche passt und trotzdem Energie liefert.'},
  {id:'st_wechsel_ernaehrung',name:'Fit durch die Wechseljahre: Ernährung für Frauen ab 40',typ:'station',kat:'Ernährung',themen:['ernaehrung','frauen'],fit:[],dauer:45,only:'frauen',
-  desc:'[ENTWURF] Der Stoffwechsel verändert sich ab 40: welche Ernährung Frauen in den Wechseljahren unterstützt, Knochen und Muskeln stärkt und das Wohlbefinden fördert.'},
+  entwurf:true,desc:'Der Stoffwechsel verändert sich ab 40: welche Ernährung Frauen in den Wechseljahren unterstützt, Knochen und Muskeln stärkt und das Wohlbefinden fördert.'},
 
  /* ═══════════ Spalte GESUNDHEITSCHECKS (4) ═══════════ */
  {id:'st_check_hrv',name:'HRV-Messung – Stressbelastung objektiv sichtbar machen',typ:'station',kat:'Gesundheitschecks',themen:['checks','mental'],fit:['fk'],dauer:45,
@@ -1040,6 +1041,10 @@ function celebrate(total){
 
 /* ═════════ TAGESPLAN ═════════ */
 function xBtn(id){return '<button class="cell-x" title="Aus dem Plan entfernen" onclick="removeModule(\''+id+'\')">✕</button>'}
+/* Kurzes Typ-Label fuer Vollzeilen (Keynote/Impuls/Abschluss) */
+function typeLabel(m){return m.typ==='keynote'?'Keynote':m.typ==='baustein'?'Abschluss':m.typ==='schnupperkurs'?'Schnupperkurs':m.typ==='aktiv'?'Aktiv-Einheit':'Workshop'}
+/* Entdeckbarer Info-Trigger je Modulzelle; Text erscheint als Tooltip (Hover/Tap) */
+function infoBtn(desc){return '<button class="cell-info" type="button" draggable="false" aria-label="Mehr Infos zum Modul" data-tip="'+escAttr(desc)+'">'+icon('info')+'</button>'}
 
 /* Empfehlungs-Auswahl einmalig in einen festen Plan packen */
 function packPlan(ids){
@@ -1138,10 +1143,11 @@ function planCellHTML(entry,feld,ti,si,slotsTotal){
   var ziehbar=(!entry.cont&&(entry.m.slots||1)===1&&typeof ti==='number');
   var h='<div class="plan-cell'+(entry.cont?'':' has-x')+flash+(ziehbar?' cell-draggable':'')+'"'+dnd+
     (ziehbar?' draggable="true" ondragstart="cellDragStart(event,'+ti+','+si+')" ondragend="cellDragEnd(event)"':'')+
-    ' title="'+escAttr(entry.m.desc)+'">';
+    '>';
   if(!entry.cont)h+=xBtn(entry.m.id);
   h+='<span class="cell-track">'+esc(tag)+'</span>'+esc(entry.m.name);
   h+=entry.cont?'<span class="cell-note">Fortsetzung (Teil 2)</span>':'<span class="cell-note">'+entry.m.dauer+' Min'+(entry.m.hinweis?' · '+esc(entry.m.hinweis):'')+'</span>';
+  if(!entry.cont)h+=infoBtn(entry.m.desc);
   /* Zeitliches Verschieben innerhalb der Spalte (nur Einzel-Slot-Module) */
   if(!entry.cont&&(entry.m.slots||1)===1&&typeof ti==='number'){
     var mv='';
@@ -1157,12 +1163,14 @@ function buildPlanHTML(){
   var n=d.tracks.length||1;
   var colStyle='grid-template-columns:repeat('+n+',minmax('+(n>2?'150px':'170px')+',1fr))';
   var h='';
-  function fullRow(time,contentHTML,note,removeId){
+  function fullRow(time,contentHTML,note,removeId,tipMod){
     h+='<div class="plan-row"><div class="plan-time">'+time+'</div>';
     h+='<div class="plan-cells full-row" style="grid-template-columns:1fr"><div class="plan-cell full'+(removeId?' has-x':'')+'">';
     if(removeId)h+=xBtn(removeId);
+    if(tipMod){var _th=THEME_LABELS[tipMod.themen[0]]||'';h+='<span class="cell-track">'+esc(typeLabel(tipMod)+(_th?' · '+_th:''))+'</span>';}
     h+=contentHTML;
     if(note)h+='<span class="cell-note">'+esc(note)+'</span>';
+    if(tipMod&&tipMod.desc)h+=infoBtn(tipMod.desc);
     h+='</div></div></div>';
   }
   /* Freier Platz in einer Vollzeile: bleibt sichtbar und ist direkt neu befüllbar */
@@ -1180,14 +1188,14 @@ function buildPlanHTML(){
     });
     h+='</div></div>';
   }
-  if(d.opener)fullRow('09:00 – 09:45',esc(d.opener.name),'Gemeinsamer Auftakt · '+d.opener.dauer+' Min',d.opener.id);
+  if(d.opener)fullRow('09:00 – 09:45',esc(d.opener.name),'Gemeinsamer Auftakt · '+d.opener.dauer+' Min',d.opener.id,d.opener);
   else fullSlot('09:00 – 09:45','Auftakt-Keynote wählen','Keynotes & Impulse');
   var slotTimes=d.halb
     ?['10:00 – 10:45','11:00 – 11:45']
     :['10:00 – 10:45','11:00 – 11:45','13:00 – 13:45','14:00 – 14:45'];
   for(var s=0;s<d.slots;s++){
     if(!d.halb&&s===2){
-      if(d.mittag)fullRow('12:00 – 12:30',esc(d.mittag.name),'Impuls vor der Pause',d.mittag.id);
+      if(d.mittag)fullRow('12:00 – 12:30',esc(d.mittag.name),'Impuls vor der Pause',d.mittag.id,d.mittag);
       fullRow(d.mittag?'12:30 – 13:00':'12:00 – 13:00','Mittagspause');
     }
     var parallel=0;
@@ -1206,7 +1214,7 @@ function buildPlanHTML(){
     sk+='<button class="cell-chip chip-add" onclick="openPoolKat(\'Schnupperkurse &amp; Abschluss\')">+ Schnupperkurs</button>';
     fullRow(skTime,sk,'Zum Mitmachen, parallel zur Auswahl');
   }else fullSlot(skTime,'Schnupperkurs wählen (optional)','Schnupperkurse & Abschluss');
-  if(d.ausklang)fullRow('im Anschluss',esc(d.ausklang.name),d.ausklang.dauer+' Min',d.ausklang.id);
+  if(d.ausklang)fullRow('im Anschluss',esc(d.ausklang.name),d.ausklang.dauer+' Min',d.ausklang.id,d.ausklang);
   else fullSlot('im Anschluss','Tagesausklang wählen (optional)','Schnupperkurse & Abschluss');
   return '<div class="plan-tbl tracks-'+d.tracks.length+'">'+h+'</div>';
 }
@@ -1517,15 +1525,58 @@ document.addEventListener('keydown',function(e){
   }
 });
 
+/* ═════════ MODUL-TOOLTIP (Hover am Desktop, Tap auf Touch) ═════════ */
+var _tipTrigger=null,_tipLock=false;
+function gtkTipShow(trigger){
+  var tip=document.getElementById('gtkTip');if(!tip)return;
+  var txt=trigger.getAttribute('data-tip');if(!txt){gtkTipHide();return}
+  tip.textContent=txt;
+  var r=trigger.getBoundingClientRect(),tr=tip.getBoundingClientRect();
+  var vw=window.innerWidth,vh=window.innerHeight;
+  var left=Math.max(8,Math.min(r.left+r.width/2-tr.width/2,vw-tr.width-8));
+  var top=r.top-tr.height-10;
+  if(top<8)top=r.bottom+10;
+  top=Math.max(8,Math.min(top,vh-tr.height-8));
+  tip.style.left=left+'px';tip.style.top=top+'px';
+  tip.classList.add('show');tip.setAttribute('aria-hidden','false');
+  _tipTrigger=trigger;
+}
+function gtkTipHide(){
+  var tip=document.getElementById('gtkTip');
+  if(tip){tip.classList.remove('show');tip.setAttribute('aria-hidden','true')}
+  _tipTrigger=null;_tipLock=false;
+}
+function setupTips(){
+  if(!ROOT||ROOT._tipsBound)return;ROOT._tipsBound=true;
+  ROOT.addEventListener('mouseover',function(e){
+    var t=e.target.closest&&e.target.closest('.cell-info');
+    if(t&&!_tipLock)gtkTipShow(t);
+  });
+  ROOT.addEventListener('mouseout',function(e){
+    var t=e.target.closest&&e.target.closest('.cell-info');
+    if(t&&!_tipLock)gtkTipHide();
+  });
+  ROOT.addEventListener('click',function(e){
+    var t=e.target.closest&&e.target.closest('.cell-info');
+    if(t){e.preventDefault();e.stopPropagation();
+      if(_tipLock&&_tipTrigger===t)gtkTipHide();else{gtkTipShow(t);_tipLock=true}
+      return;
+    }
+    if(_tipLock)gtkTipHide();
+  });
+  window.addEventListener('scroll',function(){if(_tipTrigger)gtkTipHide()},true);
+  window.addEventListener('resize',function(){if(_tipTrigger)gtkTipHide()});
+}
+
 /* ═════════ BOOT: Shell in #gtk-root injizieren ═════════ */
-var SHELL="<div class=\"progress-bar\"><div class=\"progress-fill\" id=\"progressFill\"></div></div>\n<div class=\"step-indicator\" id=\"stepIndicator\"></div>\n<button class=\"back-btn\" id=\"backBtn\" onclick=\"goBack()\">\n  <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"19\" y1=\"12\" x2=\"5\" y2=\"12\"/><polyline points=\"12 19 5 12 12 5\"/></svg>\n  Zurück\n</button>\n\n<!-- Warenkorb -->\n<button class=\"cart-widget\" id=\"cartWidget\" onclick=\"toggleCartPanel()\" aria-label=\"Dein Gesundheitstag-Paket\">\n  <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#006e1d\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z\"/></svg>\n  <span class=\"cart-label\">Dein Paket</span>\n  <span class=\"cart-count\" id=\"cartCount\">0</span>\n</button>\n<div class=\"cart-panel\" id=\"cartPanel\"></div>\n<button class=\"float-cta\" id=\"floatCta\" onclick=\"showForm()\">Unverbindlich anfragen\n  <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg>\n</button>\n\n<div class=\"viewport\" id=\"viewport\">\n\n  <!-- SLIDE 0: HERO -->\n  <div class=\"slide slide-hero active\" id=\"slide-0\">\n    <div class=\"hero-content\">\n      <p class=\"hero-overline\">Gesundheitstag-Konfigurator</p>\n      <h1 class=\"hero-h1\">Stell dir deinen <em>Gesundheitstag</em> zusammen.</h1>\n      <p class=\"hero-sub\">Jeder Gesundheitstag ist so individuell wie euer Unternehmen. Beantworte sieben kurze Fragen und wir stellen dir live die passenden Module zu eurem Tagesablauf zusammen.</p>\n      <button class=\"hero-cta\" onclick=\"startFunnel()\">\n        Los geht's\n        <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg>\n      </button>\n      <div class=\"hero-stats\">\n        <div><div class=\"stat-num\">75+</div><div class=\"stat-label\">Module zur Auswahl</div></div>\n        <div><div class=\"stat-num\" id=\"statSteps\">7</div><div class=\"stat-label\">Fragen bis zum Konzept</div></div>\n        <div><div class=\"stat-num\">1</div><div class=\"stat-label\">individueller Tagesplan</div></div>\n      </div>\n    </div>\n  </div>\n\n  <!-- SLIDES 1–7: FRAGEN (dynamisch) -->\n  <div class=\"slide slide-question\" id=\"slide-1\"><div class=\"q-inner\" id=\"qInner1\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-2\"><div class=\"q-inner\" id=\"qInner2\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-3\"><div class=\"q-inner\" id=\"qInner3\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-4\"><div class=\"q-inner\" id=\"qInner4\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-5\"><div class=\"q-inner\" id=\"qInner5\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-6\"><div class=\"q-inner\" id=\"qInner6\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-7\"><div class=\"q-inner\" id=\"qInner7\"></div></div>\n\n  <!-- SLIDE 8: ERGEBNIS -->\n  <div class=\"slide slide-result\" id=\"slide-8\"><div class=\"r-inner\" id=\"resultInner\"></div></div>\n\n  <!-- SLIDE 9: ANFRAGE -->\n  <div class=\"slide slide-form\" id=\"slide-9\"><div class=\"f-inner\" id=\"formInner\"></div></div>\n</div>";
+var SHELL="<div class=\"progress-bar\"><div class=\"progress-fill\" id=\"progressFill\"></div></div>\n<div class=\"step-indicator\" id=\"stepIndicator\"></div>\n<button class=\"back-btn\" id=\"backBtn\" onclick=\"goBack()\">\n  <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"19\" y1=\"12\" x2=\"5\" y2=\"12\"/><polyline points=\"12 19 5 12 12 5\"/></svg>\n  Zurück\n</button>\n\n<!-- Warenkorb -->\n<button class=\"cart-widget\" id=\"cartWidget\" onclick=\"toggleCartPanel()\" aria-label=\"Dein Gesundheitstag-Paket\">\n  <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#006e1d\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z\"/></svg>\n  <span class=\"cart-label\">Dein Paket</span>\n  <span class=\"cart-count\" id=\"cartCount\">0</span>\n</button>\n<div class=\"cart-panel\" id=\"cartPanel\"></div>\n<button class=\"float-cta\" id=\"floatCta\" onclick=\"showForm()\">Unverbindlich anfragen\n  <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg>\n</button>\n\n<div class=\"viewport\" id=\"viewport\">\n\n  <!-- SLIDE 0: HERO -->\n  <div class=\"slide slide-hero active\" id=\"slide-0\">\n    <div class=\"hero-content\">\n      <p class=\"hero-overline\">Gesundheitstag-Konfigurator</p>\n      <h1 class=\"hero-h1\">Stell dir deinen <em>Gesundheitstag</em> zusammen.</h1>\n      <p class=\"hero-sub\">Jeder Gesundheitstag ist so individuell wie euer Unternehmen. Beantworte sieben kurze Fragen und wir stellen dir live die passenden Module zu eurem Tagesablauf zusammen.</p>\n      <button class=\"hero-cta\" onclick=\"startFunnel()\">\n        Los geht's\n        <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/><polyline points=\"12 5 19 12 12 19\"/></svg>\n      </button>\n      <div class=\"hero-stats\">\n        <div><div class=\"stat-num\">75+</div><div class=\"stat-label\">Module zur Auswahl</div></div>\n        <div><div class=\"stat-num\" id=\"statSteps\">7</div><div class=\"stat-label\">Fragen bis zum Konzept</div></div>\n        <div><div class=\"stat-num\">1</div><div class=\"stat-label\">individueller Tagesplan</div></div>\n      </div>\n    </div>\n  </div>\n\n  <!-- SLIDES 1–7: FRAGEN (dynamisch) -->\n  <div class=\"slide slide-question\" id=\"slide-1\"><div class=\"q-inner\" id=\"qInner1\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-2\"><div class=\"q-inner\" id=\"qInner2\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-3\"><div class=\"q-inner\" id=\"qInner3\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-4\"><div class=\"q-inner\" id=\"qInner4\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-5\"><div class=\"q-inner\" id=\"qInner5\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-6\"><div class=\"q-inner\" id=\"qInner6\"></div></div>\n  <div class=\"slide slide-question\" id=\"slide-7\"><div class=\"q-inner\" id=\"qInner7\"></div></div>\n\n  <!-- SLIDE 8: ERGEBNIS -->\n  <div class=\"slide slide-result\" id=\"slide-8\"><div class=\"r-inner\" id=\"resultInner\"></div></div>\n\n  <!-- SLIDE 9: ANFRAGE -->\n  <div class=\"slide slide-form\" id=\"slide-9\"><div class=\"f-inner\" id=\"formInner\"></div></div>\n</div>\n<div class=\"gtk-tip\" id=\"gtkTip\" role=\"tooltip\" aria-hidden=\"true\"></div>";
 function boot(){
   var root=document.getElementById('gtk-root');
   if(!root||root.getAttribute('data-gtk-ready'))return;
   root.setAttribute('data-gtk-ready','1');
   root.innerHTML=SHELL;
   ROOT=root;
-  initPips();updateChrome();renderCartPanel();
+  initPips();updateChrome();renderCartPanel();setupTips();
   var statEl=document.getElementById('statSteps');
   if(statEl)statEl.textContent=TOTAL_STEPS;
 }
