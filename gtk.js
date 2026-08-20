@@ -3,8 +3,8 @@
    Einzige Quelle der Wahrheit für Logik UND Markup-Shell.
    Einbindung: <div id="gtk-root"></div> + dieses Script (defer),
    Details im Launch-README.
-   Versand-Reihenfolge: 1) Webflow-Formular [data-gtk-form]
-   2) n8n-Webhook (WEBHOOK_URL) 3) Demo-Modus.
+   Versand-Reihenfolge: 1) Zapier Catch Hook (WEBHOOK_URL)
+   2) Webflow-Formular [data-gtk-form] als Sicherheitsnetz 3) Demo.
    ═══════════════════════════════════════════════════════════════ */
 
 /* ═════════════════════════════════════════════════════════════════
@@ -12,10 +12,11 @@
    steht hier oben. Logik-Änderungen sind dafür nicht nötig.
    ═════════════════════════════════════════════════════════════════ */
 
-/* Anfrage-Ziel. Im Livebetrieb: n8n-Webhook-URL eintragen.
-   Solange der Platzhalter "REPLACE_ME" enthalten ist, wird der
-   Versand nur simuliert (Demo-Modus). */
-var WEBHOOK_URL='https://stratego-ms.app.n8n.cloud/webhook/REPLACE_ME';
+/* Anfrage-Ziel. Live: Zapier Catch Hook (Webhooks by Zapier).
+   Der Konfigurator postet Betreff und fertigen HTML-Body flach an
+   diesen Hook; der Gmail-Schritt setzt nur {{betreff}}/{{email_html}}.
+   Enthaelt die URL noch "REPLACE_ME", wird der Versand simuliert. */
+var WEBHOOK_URL='https://hooks.zapier.com/hooks/catch/23990236/4t8po25/';
 var MAILTO='info@strong-partners.de'; /* Fallback-Adresse anpassen */
 
 var PRICING={
@@ -1373,6 +1374,123 @@ function submitViaWebflow(form,payload,onDone,onFail){
   })();
 }
 
+/* ═════════ ZAPIER: fertige Benachrichtigungsmail im Datenpaket ═════════
+   Betreff und HTML-Body werden hier im Strong-Partners-Design gebaut und
+   flach an den Catch Hook geschickt. In Zapier setzt der Gmail-Schritt nur
+   {{betreff}} (Subject) und {{email_html}} (Body, Typ HTML) ein. Hinweis:
+   Gmail rendert kein SVG, deshalb steht im Kopf ein Text-Wortzeichen; sobald
+   ein PNG-Logo unter einer oeffentlichen URL liegt, MAIL_LOGO_PNG setzen. */
+var MAIL_LOGO_PNG='https://cdn.prod.website-files.com/69970053c4693c62ff0f6079/6a8717145cc3be694431d81b_logo-sp.png'; /* PNG-URL des Logos, leer = Text-Wortzeichen */
+function mailKopf(t){
+  return '<div style="font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#006e1d;font-weight:700;margin:0 0 8px;">'+esc(t)+'</div>';
+}
+function mailKV(label,val){
+  if(!val)return '';
+  return '<tr>'
+    +'<td style="padding:3px 16px 3px 0;color:#5c6660;font-size:13px;vertical-align:top;white-space:nowrap;">'+esc(label)+'</td>'
+    +'<td style="padding:3px 0;color:#1a1c1a;font-size:13px;font-weight:700;vertical-align:top;">'+esc(val)+'</td>'
+    +'</tr>';
+}
+function mailAntworten(){
+  var out='';
+  QUESTIONS.forEach(function(q){
+    var v=answers[q.key],txt;
+    if(q.multi){txt=(v||[]).map(function(id){var o=optOf(q,id);return o?o.title:id}).join(', ')||'-';}
+    else{var o=optOf(q,v);txt=o?o.title:'-';}
+    out+='<tr>'
+      +'<td style="padding:3px 16px 3px 0;color:#5c6660;font-size:13px;vertical-align:top;white-space:nowrap;">'+esc(q.label)+'</td>'
+      +'<td style="padding:3px 0;color:#1a1c1a;font-size:13px;font-weight:700;vertical-align:top;">'+esc(txt)+'</td>'
+      +'</tr>';
+  });
+  return out;
+}
+function mailPlan(){
+  var d=buildPlanData();
+  var cols=d.tracks.length||1;
+  var th='padding:8px 10px;text-align:left;background:#006e1d;color:#ffffff;font-size:11px;letter-spacing:.03em;text-transform:uppercase;font-weight:700;';
+  var thL=th+'border-left:1px solid rgba(255,255,255,.28);';
+  var cell='border-top:1px solid #d8d5d0;border-left:1px solid #d8d5d0;padding:8px 10px;vertical-align:top;font-size:13px;color:#1a1c1a;';
+  var zeit='border-top:1px solid #d8d5d0;padding:8px 10px;vertical-align:top;font-size:13px;white-space:nowrap;font-weight:700;color:#006e1d;width:92px;';
+  var voll_='border-top:1px solid #d8d5d0;border-left:1px solid #d8d5d0;padding:8px 10px;vertical-align:top;font-size:13px;color:#1a1c1a;background:#eef7f0;';
+  var h='<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border:1px solid #d8d5d0;border-radius:10px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">';
+  h+='<tr><th style="'+th+'">Uhrzeit</th>';
+  if(cols>1){d.tracks.forEach(function(t){h+='<th style="'+thL+'">'+esc(t.label)+'</th>'});}
+  else{h+='<th style="'+thL+'">Programm</th>';}
+  h+='</tr>';
+  function vollRow(z,inhalt){h+='<tr><td style="'+zeit+'">'+z+'</td><td style="'+voll_+'" colspan="'+cols+'">'+inhalt+'</td></tr>';}
+  function mod(e){
+    if(!e)return '<td style="'+cell+'"><span style="color:#b9b5af;font-style:italic;font-size:12px;">frei / nach Absprache</span></td>';
+    if(e.cont)return '<td style="'+cell+'"><span style="color:#5c6660;font-size:12px;">Fortsetzung: '+esc(e.m.name)+'</span></td>';
+    return '<td style="'+cell+'"><b style="display:block;">'+esc(e.m.name)+'</b><span style="color:#5c6660;font-size:12px;">'+esc(THEME_LABELS[e.m.themen[0]]||'')+' · '+e.m.dauer+' Min</span></td>';
+  }
+  if(d.opener)vollRow('09:00 – 09:45','<b style="display:block;">'+esc(d.opener.name)+'</b><span style="color:#5c6660;font-size:12px;">Gemeinsamer Auftakt · '+d.opener.dauer+' Min</span>');
+  var zeiten=d.halb?['10:00 – 10:45','11:00 – 11:45']:['10:00 – 10:45','11:00 – 11:45','13:00 – 13:45','14:00 – 14:45'];
+  for(var sx=0;sx<d.slots;sx++){
+    if(!d.halb&&sx===2){
+      if(d.mittag)vollRow('12:00 – 12:30','<b style="display:block;">'+esc(d.mittag.name)+'</b><span style="color:#5c6660;font-size:12px;">Impuls vor der Pause</span>');
+      vollRow(d.mittag?'12:30 – 13:00':'12:00 – 13:00','Mittagspause');
+    }
+    h+='<tr><td style="'+zeit+'">'+zeiten[sx]+'</td>';
+    d.tracks.forEach(function(t){h+=mod(t.grid?t.grid[sx]:null)});
+    h+='</tr>';
+  }
+  if(d.sks.length)vollRow(d.halb?'12:00 – 13:00':'15:00 – 16:00',d.sks.map(function(m){return '<b>'+esc(m.name)+'</b>'}).join(' · ')+'<br><span style="color:#5c6660;font-size:12px;">Zum Mitmachen, parallel zur Auswahl</span>');
+  if(d.ausklang)vollRow('im Anschluss','<b style="display:block;">'+esc(d.ausklang.name)+'</b><span style="color:#5c6660;font-size:12px;">'+d.ausklang.dauer+' Min</span>');
+  h+='</table>';
+  return h;
+}
+function buildEmailHTML(p){
+  var k=p.kontakt;
+  var datum=new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var logo=MAIL_LOGO_PNG
+    ?'<img src="'+MAIL_LOGO_PNG+'" alt="Strong Partners" height="28" style="display:block;height:28px;width:auto;max-width:210px;">'
+    :'<span style="font-size:16px;font-weight:700;color:#006e1d;letter-spacing:.02em;">Strong Partners</span>';
+  var reco=(typeof recoInterest!=='undefined'&&recoInterest&&typeof recoById==='function'&&recoById(recoInterest))?recoById(recoInterest).title:'';
+  return ''
+    +'<div style="background:#f4f2ee;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#1a1c1a;">'
+    +'<div style="max-width:660px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e8e5e0;">'
+    +'<div style="padding:22px 26px 16px;border-bottom:3px solid #006e1d;">'
+      +'<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;"><tr>'
+        +'<td style="vertical-align:bottom;"><div style="font-size:19px;font-weight:700;color:#006e1d;">Neue Gesundheitstag-Anfrage</div>'
+        +'<div style="font-size:12px;color:#5c6660;margin-top:3px;">Aus dem Konfigurator · '+datum+'</div></td>'
+        +'<td style="vertical-align:bottom;text-align:right;">'+logo+'</td>'
+      +'</tr></table>'
+    +'</div>'
+    +'<div style="padding:24px 26px;">'
+    +mailKopf('Kontakt')
+    +'<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:22px;">'
+      +mailKV('Name',k.name)+mailKV('Firma',k.firma)+mailKV('E-Mail',k.email)
+      +mailKV('Telefon',k.telefon)+mailKV('Wunschtermin',k.wunschtermin)+mailKV('Nachricht',k.nachricht)
+    +'</table>'
+    +mailKopf('Angaben aus dem Konfigurator')
+    +'<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:22px;">'+mailAntworten()+'</table>'
+    +(reco?'<div style="background:#eef7f0;border-left:3px solid #38ba47;border-radius:6px;padding:10px 14px;font-size:13px;margin-bottom:22px;"><b>Zusätzliches Interesse:</b> '+esc(reco)+'</div>':'')
+    +mailKopf('Zusammengestellter Tagesplan')
+    +mailPlan()
+    +'</div>'
+    +'<div style="padding:14px 26px;background:#f9f7f4;color:#8a8a84;font-size:12px;border-top:1px solid #e8e5e0;">Automatisch erzeugt vom Gesundheitstag-Konfigurator</div>'
+    +'</div></div>';
+}
+function mailDateiname(firma){
+  var slug=String(firma||'').replace(/[^0-9A-Za-zÄÖÜäöüß \-_]/g,'').trim().replace(/\s+/g,'-');
+  return 'GT-'+(slug||'Gesundheitstag-Anfrage')+'.html';
+}
+function buildEmailDoc(inner){
+  return '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gesundheitstag – Tagesplan | Strong Partners</title></head><body style="margin:0;">'+inner+'</body></html>';
+}
+function buildZapierBody(p){
+  var k=p.kontakt;
+  var inner=buildEmailHTML(p);
+  var q=new URLSearchParams();
+  q.set('betreff','GT: '+(k.firma||'Gesundheitstag-Anfrage'));
+  q.set('email_html',inner);
+  q.set('datei_html',buildEmailDoc(inner));
+  q.set('dateiname',mailDateiname(k.firma));
+  q.set('name',k.name);q.set('firma',k.firma);q.set('email',k.email);
+  q.set('telefon',k.telefon);q.set('wunschtermin',k.wunschtermin);
+  q.set('nachricht',k.nachricht);q.set('quelle',p.quelle);
+  return q;
+}
 function submitRequest(){
   var name=document.getElementById('fName').value.trim();
   var firma=document.getElementById('fFirma').value.trim();
@@ -1388,19 +1506,23 @@ function submitRequest(){
     err.textContent='Das hat leider nicht geklappt. Versuch es erneut oder nutze den E-Mail-Weg darunter.';
     err.classList.add('show');
   }
-  /* 1) Webflow-natives Formular auf der Seite (Launch-Standard) */
-  var wfForm=findWebflowForm();
-  if(wfForm){submitViaWebflow(wfForm,payload,showSuccess,fail);return}
-  /* 2) n8n-Webhook (optionale Ausbaustufe) */
+  /* Sicherheitsnetz: bei Webhook-Fehler das native Webflow-Formular
+     nutzen, damit keine Anfrage verloren geht; fehlt es, Demo-Modus. */
+  function fallback(){
+    var wfForm=findWebflowForm();
+    if(wfForm){submitViaWebflow(wfForm,payload,showSuccess,fail);return}
+    try{console.log('Konfigurator-Payload (Demo):',payload)}catch(e){}
+    setTimeout(showSuccess,600);
+  }
+  /* 1) Primaer: Zapier Catch Hook, fertige E-Mail steckt im Datenpaket */
   if(WEBHOOK_URL.indexOf('REPLACE_ME')<0){
-    fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    fetch(WEBHOOK_URL,{method:'POST',body:buildZapierBody(payload)})
       .then(function(res){if(!res.ok)throw new Error('HTTP '+res.status);showSuccess()})
-      .catch(fail);
+      .catch(fallback);
     return;
   }
-  /* 3) DEMO-MODUS: weder Formular noch Webhook vorhanden → simulieren */
-  try{console.log('Konfigurator-Payload (Demo):',payload)}catch(e){}
-  setTimeout(showSuccess,800);
+  /* 2) Kein Hook gesetzt: direkt aufs Sicherheitsnetz */
+  fallback();
 }
 function showSuccess(){
   var inner=document.getElementById('formInner');
