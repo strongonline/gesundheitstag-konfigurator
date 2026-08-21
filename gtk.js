@@ -1409,11 +1409,11 @@ function mailPlan(){
   var cols=d.tracks.length||1;
   var th='padding:8px 10px;text-align:left;background:#006e1d;color:#ffffff;font-size:11px;letter-spacing:.03em;text-transform:uppercase;font-weight:700;';
   var thL=th+'border-left:1px solid rgba(255,255,255,.28);';
-  var cell='border-top:1px solid #d8d5d0;border-left:1px solid #d8d5d0;padding:8px 10px;vertical-align:top;font-size:13px;color:#1a1c1a;';
+  var cell='border-top:1px solid #d8d5d0;border-left:1px solid #d8d5d0;padding:8px 10px;vertical-align:top;font-size:13px;color:#1a1c1a;word-break:break-word;overflow-wrap:break-word;';
   var zeit='border-top:1px solid #d8d5d0;padding:8px 10px;vertical-align:top;font-size:13px;white-space:nowrap;font-weight:700;color:#006e1d;width:92px;';
-  var voll_='border-top:1px solid #d8d5d0;border-left:1px solid #d8d5d0;padding:8px 10px;vertical-align:top;font-size:13px;color:#1a1c1a;background:#eef7f0;';
-  var h='<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;border:1px solid #d8d5d0;border-radius:10px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">';
-  h+='<tr><th style="'+th+'">Uhrzeit</th>';
+  var voll_='border-top:1px solid #d8d5d0;border-left:1px solid #d8d5d0;padding:8px 10px;vertical-align:top;font-size:13px;color:#1a1c1a;background:#eef7f0;word-break:break-word;overflow-wrap:break-word;';
+  var h='<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;table-layout:fixed;border:1px solid #d8d5d0;border-radius:10px;overflow:hidden;font-family:Arial,Helvetica,sans-serif;">';
+  h+='<tr><th style="'+th+'width:88px;">Uhrzeit</th>';
   if(cols>1){d.tracks.forEach(function(t){h+='<th style="'+thL+'">'+esc(t.label)+'</th>'});}
   else{h+='<th style="'+thL+'">Programm</th>';}
   h+='</tr>';
@@ -1448,7 +1448,7 @@ function buildEmailHTML(p){
   var reco=(typeof recoInterest!=='undefined'&&recoInterest&&typeof recoById==='function'&&recoById(recoInterest))?recoById(recoInterest).title:'';
   return ''
     +'<div style="background:#f4f2ee;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#1a1c1a;">'
-    +'<div style="max-width:660px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e8e5e0;">'
+    +'<div style="max-width:940px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e8e5e0;">'
     +'<div style="padding:22px 26px 16px;border-bottom:3px solid #006e1d;">'
       +'<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;"><tr>'
         +'<td style="vertical-align:bottom;"><div style="font-size:19px;font-weight:700;color:#006e1d;">Neue Gesundheitstag-Anfrage</div>'
